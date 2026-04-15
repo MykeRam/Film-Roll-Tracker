@@ -12,6 +12,7 @@ type AuthPanelProps = {
   form: AuthFormState;
   loading: boolean;
   error: string | null;
+  emailError: string | null;
   canSubmit: boolean;
   onModeChange: (mode: AuthMode) => void;
   onFieldChange: (field: keyof AuthFormState, value: string) => void;
@@ -23,6 +24,7 @@ export function AuthPanel({
   form,
   loading,
   error,
+  emailError,
   canSubmit,
   onModeChange,
   onFieldChange,
@@ -78,9 +80,12 @@ export function AuthPanel({
           <input
             value={form.email}
             onChange={(event) => onFieldChange('email', event.target.value)}
+            type="email"
+            inputMode="email"
             autoComplete="email"
             placeholder="you@example.com"
           />
+          {emailError ? <span className="field-error">{emailError}</span> : null}
         </label>
         <label className="field">
           <span>Password</span>

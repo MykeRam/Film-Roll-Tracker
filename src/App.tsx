@@ -43,6 +43,10 @@ function createInitialAuthForm(): AuthFormState {
   };
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 const statusOrder: RollStatus[] = ['loaded', 'shot', 'developed', 'scanned'];
 
 const landingDemoMetrics = [
@@ -146,6 +150,7 @@ export default function App() {
       ...current,
       [field]: value,
     }));
+    setAuthError(null);
   };
 
   const handleAuthModeChange = (mode: AuthMode) => {
@@ -157,13 +162,24 @@ export default function App() {
     const email = authForm.email.trim();
     const password = authForm.password;
     const name = authForm.name.trim();
+    const emailIsValid = isValidEmail(email);
 
     if (authMode === 'register') {
-      return Boolean(name) && Boolean(email) && password.length >= 8 && password === authForm.confirmPassword;
+      return Boolean(name) && emailIsValid && password.length >= 8 && password === authForm.confirmPassword;
     }
 
-    return Boolean(email) && Boolean(password);
+    return emailIsValid && Boolean(password);
   }, [authForm.confirmPassword, authForm.email, authForm.name, authForm.password, authMode]);
+
+  const authEmailError = useMemo(() => {
+    const email = authForm.email.trim();
+
+    if (!email) {
+      return null;
+    }
+
+    return isValidEmail(email) ? null : 'Please enter a valid email address.';
+  }, [authForm.email]);
 
   const handleAuthSubmit = async () => {
     const email = authForm.email.trim();
@@ -175,26 +191,31 @@ export default function App() {
         setAuthError('Please enter your name.');
         return;
       }
-
-      if (!email) {
-        setAuthError('Please enter your email.');
-        return;
-      }
-
-      if (password.length < 8) {
-        setAuthError('Password must be at least 8 characters.');
-        return;
-      }
-
-      if (password !== authForm.confirmPassword) {
-        setAuthError('Passwords do not match.');
-        return;
-      }
     } else {
-      if (!email || !password) {
-        setAuthError('Please enter your email and password.');
+      if (!password) {
+        setAuthError('Please enter your password.');
         return;
       }
+    }
+
+    if (!email) {
+      setAuthError('Please enter your email.');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setAuthError('Please enter a valid email address.');
+      return;
+    }
+
+    if (password.length < 8 && authMode === 'register') {
+      setAuthError('Password must be at least 8 characters.');
+      return;
+    }
+
+    if (authMode === 'register' && password !== authForm.confirmPassword) {
+      setAuthError('Passwords do not match.');
+      return;
     }
 
     setAuthLoading(true);
@@ -554,6 +575,7 @@ export default function App() {
                 form={authForm}
                 loading={authLoading}
                 error={authError}
+                emailError={authEmailError}
                 canSubmit={authCanSubmit}
                 onModeChange={handleAuthModeChange}
                 onFieldChange={handleAuthFieldChange}
