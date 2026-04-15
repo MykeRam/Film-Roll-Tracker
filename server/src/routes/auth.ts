@@ -14,9 +14,11 @@ const authSchema = z.object({
   password: z.string().min(8).max(128),
 });
 
-const loginSchema = authSchema.pick({
-  email: true,
-  password: true,
+const registerSchema = authSchema;
+
+const loginSchema = z.object({
+  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  password: z.string().min(1).max(128),
 });
 
 type CreateAuthRouterParams = {
@@ -50,7 +52,7 @@ export function createAuthRouter({ jwtSecret, userStore, rollStore }: CreateAuth
 
   router.post('/register', async (req, res, next) => {
     try {
-      const parsed = authSchema.parse(req.body);
+      const parsed = registerSchema.parse(req.body);
       const existingUser = await userStore.findByEmail(parsed.email);
 
       if (existingUser) {
