@@ -94,8 +94,9 @@ export function AuthPanel({
             onChange={(event) => onFieldChange('password', event.target.value)}
             type="password"
             autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-            placeholder="At least 8 characters"
+            placeholder={mode === 'register' ? 'At least 8 characters' : 'Your password'}
           />
+          {mode === 'register' ? <span className="field-hint">Password must be at least 8 characters.</span> : null}
         </label>
         {mode === 'register' ? (
           <label className="field">
