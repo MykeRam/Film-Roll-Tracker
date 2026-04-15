@@ -486,6 +486,13 @@ export default function App() {
       notes: roll.notes,
     });
     setRollError(null);
+
+    window.requestAnimationFrame(() => {
+      document.getElementById('roll-form')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
   };
 
   const updateStatus = async (id: string, status: RollStatus) => {
