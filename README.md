@@ -42,7 +42,7 @@ The backend now includes a JWT auth scaffold in `server/`:
 
 The frontend authenticates against the API, loads only the signed-in user’s rolls, and only enables edit/delete actions for rolls owned by that account.
 
-The logged-out landing state is currently a clean white canvas. When you’re ready to add the final artwork, we can reintroduce a full-screen hero image layer.
+The logged-out landing state now starts with a full-screen hero image area, a centered main title, and a sign-up button in the top-right header bar. The hero image itself is still a placeholder, so you can swap in the final artwork when you’re ready.
 
 Run the API separately:
 

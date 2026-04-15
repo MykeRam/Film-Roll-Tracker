@@ -397,45 +397,42 @@ export default function App() {
             <div className="landing-hero__image" aria-hidden="true" />
             <div className="landing-hero__overlay" />
             <div className="landing-hero__content">
-              <div className="hero__copy">
+              <header className="landing-header">
+                <span className="landing-brand">Film Roll Tracker</span>
+                <button
+                  className="primary-button landing-signup-button"
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('register');
+                    document.getElementById('signup')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  Sign up
+                </button>
+              </header>
+
+              <div className="landing-hero__center">
                 <p className="eyebrow">Private workspace</p>
                 <h1>Film Roll Tracker</h1>
-                <p className="hero__lede">
-                  Sign up to create your own private roll library. The server keeps each account isolated, so only the
-                  signed-in user can edit or delete their rolls.
+                <p className="landing-hero__subtitle">
+                  Track every roll, organize your shooting history, and keep ownership of your edits and deletes.
                 </p>
-
-                <div className="hero__actions">
-                  <span className="secondary-button">User-owned rolls</span>
-                  <span className="secondary-button">JWT auth</span>
-                  <span className="secondary-button">Permission checks</span>
-                </div>
-
-                <div className="mini-summary">
-                  <div>
-                    <span>Signup flow</span>
-                    <strong>Creates starter rolls automatically</strong>
-                  </div>
-                  <div>
-                    <span>Access model</span>
-                    <strong>Only owners can modify their entries</strong>
-                  </div>
-                </div>
               </div>
-
-              <div className="landing-hero__panel">
-                <AuthPanel
-                  mode={authMode}
-                  form={authForm}
-                  loading={authLoading}
-                  error={authError}
-                  onModeChange={setAuthMode}
-                  onFieldChange={handleAuthFieldChange}
-                  onSubmit={() => {
-                    void handleAuthSubmit();
-                  }}
-                />
-              </div>
+            </div>
+          </section>
+          <section className="landing-auth-section" id="signup">
+            <div className="app landing-auth-wrap">
+              <AuthPanel
+                mode={authMode}
+                form={authForm}
+                loading={authLoading}
+                error={authError}
+                onModeChange={setAuthMode}
+                onFieldChange={handleAuthFieldChange}
+                onSubmit={() => {
+                  void handleAuthSubmit();
+                }}
+              />
             </div>
           </section>
         </main>
