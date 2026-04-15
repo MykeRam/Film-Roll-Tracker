@@ -134,10 +134,9 @@ export default function App() {
     const checkVisibility = () => {
       const rect = element.getBoundingClientRect();
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-      const visibleHeight = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
-      const visibleRatio = visibleHeight / rect.height;
+      const panelHasEnteredViewport = rect.top <= viewportHeight * 0.9 && rect.bottom > 0;
 
-      if (visibleHeight > 0 && visibleRatio >= 0.2) {
+      if (panelHasEnteredViewport) {
         setLandingDemoVisible(true);
       }
     };
