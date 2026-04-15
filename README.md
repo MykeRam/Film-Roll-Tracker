@@ -48,9 +48,11 @@ The logged-out landing state now starts with a full-screen hero image area, a ce
 
 To use PostgreSQL locally:
 
-1. Create a database.
-2. Copy [server/.env.example](/Users/myke/Documents/GitHub/Film-Roll-Tracker/server/.env.example) to [server/.env](/Users/myke/Documents/GitHub/Film-Roll-Tracker/server/.env) and update the connection string if needed.
-3. Apply the schema:
+1. Make sure PostgreSQL is running.
+2. Create a database named `film_roll_tracker`.
+3. Copy [server/.env.example](/Users/myke/Documents/GitHub/Film-Roll-Tracker/server/.env.example) to [server/.env](/Users/myke/Documents/GitHub/Film-Roll-Tracker/server/.env).
+4. Set `DATABASE_URL` to your local Postgres role. On many Homebrew installs, that is your macOS username, not `postgres`.
+5. Apply the schema:
 
 ```bash
 npm run db:setup
