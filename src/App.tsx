@@ -624,9 +624,6 @@ export default function App() {
               <a className="secondary-button" href="#roll-library">
                 View library
               </a>
-              <button className="ghost-button" type="button" onClick={handleLogout}>
-                Log out
-              </button>
             </div>
 
             <div className="mini-summary">
@@ -642,24 +639,27 @@ export default function App() {
           </div>
 
           <aside className="hero__panel">
-            <div className="hero__panel-inner">
+            <div className="hero__panel-head">
               <p className="eyebrow">Current snapshot</p>
-              <div className="snapshot-grid">
-                <StatCard
-                  label="Rolls logged"
-                  value={formatCount(stats.rollCount, 'roll')}
-                  detail={`${stats.loadedRolls + stats.shotRolls} still active`}
-                  tone="gold"
-                />
-                <StatCard label="Most-used camera" value={stats.favoriteCamera} detail="Based on your library" tone="sage" />
-                <StatCard label="Favorite stock" value={stats.favoriteFilm} detail="Most frequent film in your account" tone="clay" />
-                <StatCard
-                  label="Development rate"
-                  value={`${stats.developmentRate}%`}
-                  detail={`${stats.developedRolls + stats.scannedRolls} rolls past the darkroom`}
-                  tone="gold"
-                />
-              </div>
+              <button className="ghost-button hero__logout-button" type="button" onClick={handleLogout}>
+                Log out
+              </button>
+            </div>
+            <div className="snapshot-grid">
+              <StatCard
+                label="Rolls logged"
+                value={formatCount(stats.rollCount, 'roll')}
+                detail={`${stats.loadedRolls + stats.shotRolls} still active`}
+                tone="gold"
+              />
+              <StatCard label="Most-used camera" value={stats.favoriteCamera} detail="Based on your library" tone="sage" />
+              <StatCard label="Favorite stock" value={stats.favoriteFilm} detail="Most frequent film in your account" tone="clay" />
+              <StatCard
+                label="Development rate"
+                value={`${stats.developmentRate}%`}
+                detail={`${stats.developedRolls + stats.scannedRolls} rolls past the darkroom`}
+                tone="gold"
+              />
             </div>
           </aside>
         </header>
