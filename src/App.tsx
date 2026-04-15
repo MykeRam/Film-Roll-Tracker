@@ -463,7 +463,11 @@ export default function App() {
           </section>
           <section className="landing-split">
             <div className="landing-split__grid app">
-              <aside ref={landingDemoRef} className="panel landing-demo" aria-label="Demo stats">
+              <aside
+                ref={landingDemoRef}
+                className={`panel landing-demo${landingDemoVisible ? ' landing-demo--visible' : ''}`}
+                aria-label="Demo stats"
+              >
                 <div className="section-heading">
                   <p className="eyebrow">Demo stats</p>
                   <h2>See what the app can track</h2>
@@ -487,24 +491,27 @@ export default function App() {
                     }
                     detail="Example collection for a film shooter"
                     tone="gold"
-                    animate={landingDemoVisible}
+                    animate={false}
                     delayMs={0}
+                    reveal={landingDemoVisible}
                   />
                   <StatCard
                     label="Most-used camera"
                     value="Nikon FM2"
                     detail="Popular body in the demo library"
                     tone="sage"
-                    animate={landingDemoVisible}
+                    animate={false}
                     delayMs={120}
+                    reveal={landingDemoVisible}
                   />
                   <StatCard
                     label="Favorite stock"
                     value="Portra 400"
                     detail="Most-used film in the example account"
                     tone="clay"
-                    animate={landingDemoVisible}
+                    animate={false}
                     delayMs={240}
+                    reveal={landingDemoVisible}
                   />
                   <StatCard
                     label="Development rate"
@@ -519,12 +526,13 @@ export default function App() {
                     }
                     detail="Most rolls already past the darkroom"
                     tone="gold"
-                    animate={landingDemoVisible}
+                    animate={false}
                     delayMs={360}
+                    reveal={landingDemoVisible}
                   />
                 </div>
 
-                <div className="landing-demo__notes">
+                <div className={`landing-demo__notes${landingDemoVisible ? ' landing-demo__notes--visible' : ''}`}>
                   <div>
                     <span>Logged examples</span>
                     <strong>Loaded, shot, developed, scanned</strong>

@@ -7,6 +7,7 @@ type StatCardProps = {
   tone?: 'gold' | 'sage' | 'clay';
   animate?: boolean;
   delayMs?: number;
+  reveal?: boolean;
   style?: CSSProperties;
   className?: string;
 };
@@ -18,15 +19,17 @@ export function StatCard({
   tone = 'gold',
   animate = true,
   delayMs = 0,
+  reveal = false,
   style,
   className,
 }: StatCardProps) {
   return (
     <article
-      className={`stat-card stat-card--${tone}${className ? ` ${className}` : ''}`}
+      className={`stat-card stat-card--${tone}${reveal ? ' stat-card--reveal' : ''}${className ? ` ${className}` : ''}`}
       style={{
         animation: animate ? undefined : 'none',
         animationDelay: animate ? `${delayMs}ms` : undefined,
+        transitionDelay: reveal ? `${delayMs}ms` : undefined,
         ...style,
       }}
     >

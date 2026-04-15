@@ -230,6 +230,42 @@ svg {
   margin-top: 18px;
 }
 
+.landing-demo .stat-card,
+.landing-demo__notes > div {
+  opacity: 0;
+  transform: translateY(32px) scale(0.96);
+  filter: blur(6px);
+  transition:
+    opacity 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 720ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-demo--visible .stat-card,
+.landing-demo__notes--visible > div {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.landing-demo .stat-card:nth-child(1),
+.landing-demo__notes > div:nth-child(1) {
+  transition-delay: 0ms;
+}
+
+.landing-demo .stat-card:nth-child(2),
+.landing-demo__notes > div:nth-child(2) {
+  transition-delay: 140ms;
+}
+
+.landing-demo .stat-card:nth-child(3) {
+  transition-delay: 280ms;
+}
+
+.landing-demo .stat-card:nth-child(4) {
+  transition-delay: 420ms;
+}
+
 .landing-demo__notes div {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
@@ -479,6 +515,10 @@ h1 {
   padding: 18px;
   min-height: 136px;
   animation: rise 700ms ease-out both;
+}
+
+.landing-demo .stat-card {
+  animation: none;
 }
 
 .stat-card--gold {
