@@ -509,7 +509,11 @@ h1 {
 .auth-error {
   border: 1px solid rgba(190, 125, 97, 0.28);
   background: rgba(190, 125, 97, 0.12);
-  color: #f3d7cf;
+  color: #c24141;
+}
+
+.panel-note--error {
+  color: #c24141;
 }
 
 .dashboard-notice {
@@ -675,7 +679,7 @@ h1 {
 .field-error {
   display: block;
   margin-top: -2px;
-  color: #be7d61;
+  color: #c24141;
   font-size: 0.9rem;
   line-height: 1.4;
 }
