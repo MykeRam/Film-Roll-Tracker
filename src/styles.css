@@ -1,29 +1,24 @@
 :root {
-  color-scheme: dark;
-  --bg: #0d100f;
-  --bg-soft: rgba(20, 24, 22, 0.88);
-  --panel: rgba(20, 25, 23, 0.86);
-  --panel-strong: rgba(26, 31, 28, 0.96);
-  --line: rgba(255, 255, 255, 0.1);
-  --line-strong: rgba(255, 255, 255, 0.18);
-  --text: #f4ead9;
-  --muted: #b8b0a2;
-  --muted-strong: #d2cabd;
-  --gold: #d8a64f;
-  --gold-soft: #f1d39a;
-  --sage: #8aa27a;
-  --sage-soft: #c2d0b2;
-  --clay: #be7d61;
-  --shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-soft: rgba(255, 255, 255, 0.88);
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-strong: rgba(255, 255, 255, 0.98);
+  --line: rgba(15, 23, 42, 0.1);
+  --line-strong: rgba(15, 23, 42, 0.18);
+  --text: #111827;
+  --muted: #4b5563;
+  --muted-strong: #374151;
+  --gold: #b8892f;
+  --gold-soft: #d8b96c;
+  --sage: #6f8a67;
+  --sage-soft: #a9bca2;
+  --clay: #b26d54;
+  --shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
   --radius-xl: 28px;
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
-  --hero-image:
-    linear-gradient(180deg, rgba(7, 10, 9, 0.15), rgba(7, 10, 9, 0.7)),
-    radial-gradient(circle at 20% 20%, rgba(216, 166, 79, 0.18), transparent 28%),
-    radial-gradient(circle at 70% 30%, rgba(138, 162, 122, 0.2), transparent 22%),
-    linear-gradient(135deg, #4b4134 0%, #1d1d1b 48%, #090b0a 100%);
 }
 
 * {
@@ -39,11 +34,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   color: var(--text);
-  background:
-    radial-gradient(circle at top left, rgba(216, 166, 79, 0.2), transparent 30%),
-    radial-gradient(circle at right 20%, rgba(138, 162, 122, 0.18), transparent 26%),
-    radial-gradient(circle at bottom center, rgba(190, 125, 97, 0.18), transparent 32%),
-    linear-gradient(180deg, #0b0e0d 0%, #101513 48%, #0b0d0c 100%);
+  background: var(--bg);
   font-family: 'Manrope', sans-serif;
 }
 
@@ -87,11 +78,7 @@ svg {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.08;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.9) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.9) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 90%);
+  opacity: 0;
 }
 
 .app {
@@ -113,24 +100,15 @@ svg {
   border-radius: 0;
   border: 0;
   box-shadow: none;
-  background: #090b0a;
+  background: #ffffff;
 }
 
 .landing-hero__image {
-  position: absolute;
-  inset: 0;
-  background-image: var(--hero-image);
-  background-size: cover;
-  background-position: center;
-  transform: scale(1.02);
+  display: none;
 }
 
 .landing-hero__overlay {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgba(7, 9, 8, 0.82) 0%, rgba(7, 9, 8, 0.5) 45%, rgba(7, 9, 8, 0.76) 100%),
-    linear-gradient(180deg, rgba(7, 9, 8, 0.18), rgba(7, 9, 8, 0.48));
+  display: none;
 }
 
 .landing-hero__content {
@@ -317,8 +295,8 @@ h1 {
 }
 
 .landing-hero .auth-panel {
-  background: rgba(18, 22, 20, 0.72);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--line);
 }
 
 .auth-panel--loading {
