@@ -59,6 +59,42 @@ function formatAuthError(message: string, mode: AuthMode) {
   return message;
 }
 
+type RollValidationErrors = Partial<Record<keyof RollDraft, string>>;
+
+function validateRollDraft(draft: RollDraft): RollValidationErrors {
+  const errors: RollValidationErrors = {};
+
+  if (!draft.title.trim()) {
+    errors.title = 'Roll title is required.';
+  }
+
+  if (!draft.camera.trim()) {
+    errors.camera = 'Camera is required.';
+  }
+
+  if (!draft.lens.trim()) {
+    errors.lens = 'Lens is required.';
+  }
+
+  if (!draft.filmStock.trim()) {
+    errors.filmStock = 'Film stock is required.';
+  }
+
+  if (!draft.iso.trim()) {
+    errors.iso = 'ISO is required.';
+  } else if (!/^\d+$/.test(draft.iso.trim())) {
+    errors.iso = 'ISO must be a whole number.';
+  } else if (Number(draft.iso) <= 0) {
+    errors.iso = 'ISO must be greater than 0.';
+  }
+
+  if (!draft.dateLoaded.trim()) {
+    errors.dateLoaded = 'Date loaded is required.';
+  }
+
+  return errors;
+}
+
 const statusOrder: RollStatus[] = ['loaded', 'shot', 'developed', 'scanned'];
 
 const landingDemoMetrics = [
@@ -92,6 +128,7 @@ export default function App() {
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [rollLoading, setRollLoading] = useState(false);
   const [rollError, setRollError] = useState<string | null>(null);
+  const [rollErrors, setRollErrors] = useState<RollValidationErrors>({});
   const authNoticeTimerRef = useRef<number | null>(null);
 
   const clearSession = () => {
@@ -104,6 +141,7 @@ export default function App() {
     setAuthError(null);
     setAuthNotice(null);
     setRollError(null);
+    setRollErrors({});
   };
 
   useEffect(() => {
@@ -349,12 +387,23 @@ export default function App() {
       ...current,
       [field]: value,
     }));
+    setRollErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+    setRollError(null);
   };
 
   const resetDraft = () => {
     setEditingId(null);
     setDraft(createInitialDraft());
     setRollError(null);
+    setRollErrors({});
   };
 
   const requireToken = () => {
@@ -378,21 +427,17 @@ export default function App() {
 
   const handleSubmit = async () => {
     const currentToken = requireToken();
-    const isoValue = Number(draft.iso);
+    const validationErrors = validateRollDraft(draft);
 
-    if (
-      !draft.title.trim() ||
-      !draft.camera.trim() ||
-      !draft.lens.trim() ||
-      !draft.filmStock.trim() ||
-      !draft.dateLoaded.trim() ||
-      Number.isNaN(isoValue)
-    ) {
+    if (Object.keys(validationErrors).length > 0) {
+      setRollErrors(validationErrors);
+      setRollError('Please fix the highlighted fields.');
       return;
     }
 
     setRollLoading(true);
     setRollError(null);
+    setRollErrors({});
 
     try {
       const payload = buildRollPayload(draft);
@@ -751,6 +796,7 @@ export default function App() {
           draft={draft}
           mode={editingId ? 'edit' : 'create'}
           loading={rollLoading}
+          errors={rollErrors}
           onFieldChange={handleFieldChange}
           onStatusChange={(value) => handleFieldChange('status', value)}
           onSubmit={() => {
