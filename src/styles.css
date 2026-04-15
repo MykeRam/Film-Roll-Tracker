@@ -103,7 +103,10 @@ svg {
   border-radius: 0;
   border: 0;
   box-shadow: none;
-  background: #ffffff;
+  background: var(--landing-hero-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .landing-hero.panel {
@@ -111,13 +114,7 @@ svg {
 }
 
 .landing-hero__image {
-  position: absolute;
-  inset: 0;
-  background-image: var(--landing-hero-image);
-  background-size: cover;
-  background-position: center;
-  transform: scale(1.02);
-  border-radius: 0;
+  display: none;
 }
 
 .landing-hero__overlay {
