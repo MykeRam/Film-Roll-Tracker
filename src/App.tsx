@@ -47,6 +47,18 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function formatAuthError(message: string, mode: AuthMode) {
+  if (mode !== 'login') {
+    return message;
+  }
+
+  if (message.includes('8 character') || message.includes('Validation failed')) {
+    return 'Invalid email or password.';
+  }
+
+  return message;
+}
+
 const statusOrder: RollStatus[] = ['loaded', 'shot', 'developed', 'scanned'];
 
 const landingDemoMetrics = [
@@ -260,7 +272,8 @@ export default function App() {
 
       setAuthLoading(false);
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Failed to authenticate.');
+      const message = error instanceof Error ? error.message : 'Failed to authenticate.';
+      setAuthError(formatAuthError(message, authMode));
       setAuthLoading(false);
     } finally {
       setAppLoading(false);
