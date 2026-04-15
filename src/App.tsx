@@ -44,6 +44,15 @@ function createInitialAuthForm(): AuthFormState {
 
 const statusOrder: RollStatus[] = ['loaded', 'shot', 'developed', 'scanned'];
 
+const landingDemoMetrics = [
+  { label: 'Loaded rolls', value: '6 loaded', percent: 25, tone: 'gold' },
+  { label: 'Developed rolls', value: '16 developed', percent: 67, tone: 'sage' },
+  { label: 'Scanned rolls', value: '8 scanned', percent: 33, tone: 'clay' },
+  { label: 'Private access', value: 'JWT protected', percent: 100, tone: 'gold' },
+] as const;
+
+const landingDemoBadges = ['24 rolls logged', '3 camera bodies', '5 film stocks', 'Owners-only edits'];
+
 function formatCount(value: number, noun: string) {
   return `${value} ${noun}${value === 1 ? '' : 's'}`;
 }
@@ -432,37 +441,26 @@ export default function App() {
                   </p>
                 </div>
 
-                <div className="landing-demo__stats">
-                  <StatCard label="Rolls logged" value="24 rolls" detail="Example collection for a film shooter" tone="gold" />
-                  <StatCard
-                    label="Most-used camera"
-                    value="Nikon FM2"
-                    detail="Popular body in the demo library"
-                    tone="sage"
-                  />
-                  <StatCard
-                    label="Favorite stock"
-                    value="Portra 400"
-                    detail="Most-used film in the example account"
-                    tone="clay"
-                  />
-                  <StatCard
-                    label="Development rate"
-                    value="83%"
-                    detail="Most rolls already past the darkroom"
-                    tone="gold"
-                  />
+                <div className="landing-demo__progress">
+                  {landingDemoMetrics.map((metric) => (
+                    <article key={metric.label} className={`demo-progress demo-progress--${metric.tone}`}>
+                      <div className="demo-progress__row">
+                        <span>{metric.label}</span>
+                        <strong>{metric.value}</strong>
+                      </div>
+                      <div className="demo-progress__track" aria-hidden="true">
+                        <div className="demo-progress__fill" style={{ width: `${metric.percent}%` }} />
+                      </div>
+                    </article>
+                  ))}
                 </div>
 
-                <div className="landing-demo__notes">
-                  <div>
-                    <span>Logged examples</span>
-                    <strong>Loaded, shot, developed, scanned</strong>
-                  </div>
-                  <div>
-                    <span>Access model</span>
-                    <strong>Owners control their own roll edits</strong>
-                  </div>
+                <div className="landing-demo__badges" aria-label="Example highlights">
+                  {landingDemoBadges.map((badge) => (
+                    <span key={badge} className="demo-badge">
+                      {badge}
+                    </span>
+                  ))}
                 </div>
               </aside>
 

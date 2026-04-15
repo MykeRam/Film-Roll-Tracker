@@ -216,37 +216,83 @@ svg {
   font-size: clamp(1.55rem, 2.4vw, 2.1rem);
 }
 
-.landing-demo__stats {
+.landing-demo__progress {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-top: 22px;
 }
 
-.landing-demo__notes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.demo-progress {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin-top: 18px;
-}
-
-.landing-demo__notes div {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: rgba(15, 23, 42, 0.02);
   padding: 16px;
 }
 
-.landing-demo__notes span {
-  color: var(--muted);
-  font-size: 0.9rem;
+.demo-progress__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.landing-demo__notes strong {
-  display: block;
-  margin-top: 6px;
-  color: var(--text);
+.demo-progress__row span {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
   font-weight: 700;
+}
+
+.demo-progress__row strong {
+  color: var(--text);
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.demo-progress__track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.demo-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--gold-soft), var(--gold));
+}
+
+.demo-progress--sage .demo-progress__fill {
+  background: linear-gradient(135deg, var(--sage-soft), var(--sage));
+}
+
+.demo-progress--clay .demo-progress__fill {
+  background: linear-gradient(135deg, rgba(226, 158, 129, 0.95), var(--clay));
+}
+
+.landing-demo__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.demo-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.03);
+  padding: 0 14px;
+  color: var(--muted-strong);
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .panel,
@@ -883,8 +929,8 @@ tbody tr:hover {
     flex-direction: column;
   }
 
-  .landing-demo__stats,
-  .landing-demo__notes,
+  .landing-demo__progress,
+  .landing-demo__badges,
   .mini-summary,
   .snapshot-grid,
   .form-grid,
