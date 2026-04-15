@@ -8,6 +8,7 @@ type CountUpProps = {
   suffix?: string;
   className?: string;
   play?: boolean;
+  delayMs?: number;
 };
 
 function prefersReducedMotion() {
@@ -22,6 +23,7 @@ export function CountUp({
   suffix = '',
   className,
   play = true,
+  delayMs = 0,
 }: CountUpProps) {
   const [value, setValue] = useState(0);
   const [hasPlayed, setHasPlayed] = useState(() => prefersReducedMotion() && play);
@@ -38,26 +40,33 @@ export function CountUp({
     }
 
     let frame = 0;
-    const start = performance.now();
+    let timeout = 0;
 
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(end * eased);
+    const startAnimation = () => {
+      const start = performance.now();
 
-      if (progress < 1) {
-        frame = window.requestAnimationFrame(tick);
-      } else {
-        setHasPlayed(true);
-      }
+      const tick = (now: number) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setValue(end * eased);
+
+        if (progress < 1) {
+          frame = window.requestAnimationFrame(tick);
+        } else {
+          setHasPlayed(true);
+        }
+      };
+
+      frame = window.requestAnimationFrame(tick);
     };
 
-    frame = window.requestAnimationFrame(tick);
+    timeout = window.setTimeout(startAnimation, delayMs);
 
     return () => {
+      window.clearTimeout(timeout);
       window.cancelAnimationFrame(frame);
     };
-  }, [duration, end, hasPlayed, play]);
+  }, [delayMs, duration, end, hasPlayed, play]);
 
   return <span className={className}>{`${prefix}${value.toFixed(decimals)}${suffix}`}</span>;
 }

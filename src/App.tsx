@@ -465,10 +465,19 @@ export default function App() {
                 <div className="landing-demo__stats">
                   <StatCard
                     label="Rolls logged"
-                    value={<CountUp className="count-up" end={24} suffix=" rolls" play={landingDemoVisible} />}
+                    value={
+                      <CountUp
+                        className="count-up"
+                        end={24}
+                        suffix=" rolls"
+                        play={landingDemoVisible}
+                        delayMs={0}
+                      />
+                    }
                     detail="Example collection for a film shooter"
                     tone="gold"
                     animate={landingDemoVisible}
+                    delayMs={0}
                   />
                   <StatCard
                     label="Most-used camera"
@@ -476,6 +485,7 @@ export default function App() {
                     detail="Popular body in the demo library"
                     tone="sage"
                     animate={landingDemoVisible}
+                    delayMs={120}
                   />
                   <StatCard
                     label="Favorite stock"
@@ -483,13 +493,23 @@ export default function App() {
                     detail="Most-used film in the example account"
                     tone="clay"
                     animate={landingDemoVisible}
+                    delayMs={240}
                   />
                   <StatCard
                     label="Development rate"
-                    value={<CountUp className="count-up" end={83} suffix="%" play={landingDemoVisible} />}
+                    value={
+                      <CountUp
+                        className="count-up"
+                        end={83}
+                        suffix="%"
+                        play={landingDemoVisible}
+                        delayMs={360}
+                      />
+                    }
                     detail="Most rolls already past the darkroom"
                     tone="gold"
                     animate={landingDemoVisible}
+                    delayMs={360}
                   />
                 </div>
 
