@@ -676,7 +676,7 @@ h1 {
   font-size: 0.92rem;
 }
 
-.field-error {
+.field .field-error {
   display: block;
   margin-top: -2px;
   color: #c24141;
