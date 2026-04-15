@@ -421,7 +421,6 @@ export default function App() {
               </header>
 
               <div className="landing-hero__center">
-                <p className="eyebrow">Private workspace</p>
                 <h1>Film Roll Tracker</h1>
                 <p className="landing-hero__subtitle">
                   Track every roll and organize your shooting history.
