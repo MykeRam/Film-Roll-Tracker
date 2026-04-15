@@ -403,7 +403,7 @@ export default function App() {
       <div className="app-shell">
         <main className="landing-shell">
           <section className="landing-hero panel">
-            <div className="landing-hero__image" aria-hidden="true" />
+            <img className="landing-hero__image" src="/hero.jpg" alt="" aria-hidden="true" />
             <div className="landing-hero__overlay" />
             <div className="landing-hero__content">
               <header className="landing-header">
