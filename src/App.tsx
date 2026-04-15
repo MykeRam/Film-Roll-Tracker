@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AuthPanel, type AuthFormState, type AuthMode } from './components/AuthPanel';
+import { CountUp } from './components/CountUp';
 import { RollForm } from './components/RollForm';
 import { RollTable } from './components/RollTable';
 import { StatCard } from './components/StatCard';
@@ -433,10 +434,20 @@ export default function App() {
                 </div>
 
                 <div className="landing-demo__stats">
-                  <StatCard label="Rolls logged" value="24 rolls" detail="Example collection for a film shooter" tone="gold" />
+                  <StatCard
+                    label="Rolls logged"
+                    value={<CountUp className="count-up" end={24} suffix=" rolls" />}
+                    detail="Example collection for a film shooter"
+                    tone="gold"
+                  />
                   <StatCard label="Most-used camera" value="Nikon FM2" detail="Popular body in the demo library" tone="sage" />
                   <StatCard label="Favorite stock" value="Portra 400" detail="Most-used film in the example account" tone="clay" />
-                  <StatCard label="Development rate" value="83%" detail="Most rolls already past the darkroom" tone="gold" />
+                  <StatCard
+                    label="Development rate"
+                    value={<CountUp className="count-up" end={83} suffix="%" />}
+                    detail="Most rolls already past the darkroom"
+                    tone="gold"
+                  />
                 </div>
 
                 <div className="landing-demo__notes">

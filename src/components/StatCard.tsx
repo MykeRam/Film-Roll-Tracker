@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
+
 type StatCardProps = {
   label: string;
-  value: string;
+  value: ReactNode;
   detail: string;
   tone?: 'gold' | 'sage' | 'clay';
 };
@@ -14,4 +16,3 @@ export function StatCard({ label, value, detail, tone = 'gold' }: StatCardProps)
     </article>
   );
 }
-
