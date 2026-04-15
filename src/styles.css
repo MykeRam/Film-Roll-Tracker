@@ -270,6 +270,10 @@ svg {
   animation: rise 600ms ease-out both;
 }
 
+.hero.panel {
+  border-radius: 0;
+}
+
 .hero__copy {
   display: flex;
   flex-direction: column;
@@ -454,7 +458,7 @@ h1 {
 
 .hero__panel-inner {
   width: 100%;
-  border-radius: calc(var(--radius-xl) - 6px);
+  border-radius: 0;
   padding: 18px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid var(--line);
