@@ -76,6 +76,7 @@ export default function App() {
     setRolls([]);
     setDraft(createInitialDraft());
     setEditingId(null);
+    setLandingDemoVisible(false);
   };
 
   useEffect(() => {
@@ -124,27 +125,38 @@ export default function App() {
   useEffect(() => {
     const element = landingDemoRef.current;
 
-    if (!element || typeof IntersectionObserver === 'undefined') {
+    if (!element) {
       return;
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setLandingDemoVisible(true);
-          observer.disconnect();
-        }
-      },
-      {
-        threshold: 0.12,
-        rootMargin: '0px 0px -18% 0px',
-      },
-    );
+    let frame = 0;
 
-    observer.observe(element);
+    const checkVisibility = () => {
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const visibleHeight = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+      const visibleRatio = visibleHeight / rect.height;
+
+      if (visibleHeight > 0 && visibleRatio >= 0.2) {
+        setLandingDemoVisible(true);
+      }
+    };
+
+    const scheduleCheck = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(checkVisibility);
+    };
+
+    scheduleCheck();
+    window.addEventListener('scroll', scheduleCheck, { passive: true });
+    window.addEventListener('resize', scheduleCheck);
+    window.addEventListener('orientationchange', scheduleCheck);
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('scroll', scheduleCheck);
+      window.removeEventListener('resize', scheduleCheck);
+      window.removeEventListener('orientationchange', scheduleCheck);
+      window.cancelAnimationFrame(frame);
     };
   }, [sessionUser]);
 
