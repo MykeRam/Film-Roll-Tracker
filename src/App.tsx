@@ -445,7 +445,7 @@ export default function App() {
                 <p className="eyebrow">Private workspace</p>
                 <h1>Film Roll Tracker</h1>
                 <p className="landing-hero__subtitle">
-                  Track every roll, organize your shooting history, and keep ownership of your edits and deletes.
+                  Track every roll and organize your shooting history.
                 </p>
               </div>
             </div>
