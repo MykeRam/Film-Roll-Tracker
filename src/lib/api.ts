@@ -26,17 +26,19 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   });
 
   if (!response.ok) {
+    const responseText = await response.text();
     let payload: ApiErrorPayload | null = null;
 
     try {
-      payload = (await response.json()) as ApiErrorPayload;
+      payload = responseText ? (JSON.parse(responseText) as ApiErrorPayload) : null;
     } catch {
       payload = null;
     }
 
     const message = payload?.message ?? `Request failed with status ${response.status}`;
     const issues = payload?.issues?.map((issue) => `${issue.path}: ${issue.message}`) ?? [];
-    throw new Error([message, ...issues].filter(Boolean).join(' '));
+    const detail = !payload?.message && responseText ? responseText : '';
+    throw new Error([message, ...issues, detail].filter(Boolean).join(' '));
   }
 
   if (response.status === 204) {
