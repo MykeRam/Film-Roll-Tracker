@@ -626,16 +626,6 @@ export default function App() {
               </a>
             </div>
 
-            <div className="mini-summary">
-              <div>
-                <span>Access control</span>
-                <strong>Only owners can edit and delete</strong>
-              </div>
-              <div>
-                <span>Session</span>
-                <strong>{sessionUser.email}</strong>
-              </div>
-            </div>
           </div>
 
           <aside className="hero__panel">
