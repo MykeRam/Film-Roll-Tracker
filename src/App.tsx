@@ -575,7 +575,7 @@ export default function App() {
         {authNotice ? <p className="dashboard-notice">{authNotice}</p> : null}
         <header className="hero panel">
           <div className="hero__copy">
-            <p className="eyebrow">Signed in as {sessionUser.name}</p>
+            <p className="eyebrow">Welcome back, {sessionUser.name}!</p>
             <h1>Film Roll Tracker</h1>
             <p className="hero__lede">
               A portfolio-ready tracker for film photographers to log rolls, record camera, lens, stock, and date
