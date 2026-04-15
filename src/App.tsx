@@ -68,7 +68,6 @@ export default function App() {
   const [rollError, setRollError] = useState<string | null>(null);
   const [landingDemoVisible, setLandingDemoVisible] = useState(false);
   const landingDemoRef = useRef<HTMLElement | null>(null);
-  const landingDemoTriggerRef = useRef<HTMLDivElement | null>(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -124,53 +123,29 @@ export default function App() {
   }, [token]);
 
   useEffect(() => {
-    const trigger = landingDemoTriggerRef.current;
+    const element = landingDemoRef.current;
 
-    if (!trigger) {
+    if (!element) {
       return;
     }
-
-    const reveal = () => {
-      setLandingDemoVisible(true);
-    };
-
-    const checkVisibility = () => {
-      const rect = trigger.getBoundingClientRect();
-      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-      const isInView = rect.top <= viewportHeight * 0.75 && rect.bottom >= 0;
-
-      if (isInView) {
-        reveal();
-      }
-    };
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
-          reveal();
+          setLandingDemoVisible(true);
+          observer.disconnect();
         }
       },
       {
-        threshold: 0,
-        rootMargin: '0px 0px -25% 0px',
+        threshold: 0.1,
+        rootMargin: '0px 0px -15% 0px',
       },
     );
 
-    let frame = window.requestAnimationFrame(checkVisibility);
-    const timeout = window.setTimeout(checkVisibility, 250);
-
-    observer.observe(trigger);
-    window.addEventListener('scroll', checkVisibility, { passive: true });
-    window.addEventListener('resize', checkVisibility);
-    window.addEventListener('orientationchange', checkVisibility);
+    observer.observe(element);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener('scroll', checkVisibility);
-      window.removeEventListener('resize', checkVisibility);
-      window.removeEventListener('orientationchange', checkVisibility);
-      window.cancelAnimationFrame(frame);
-      window.clearTimeout(timeout);
     };
   }, [sessionUser]);
 
@@ -479,7 +454,6 @@ export default function App() {
           <section className="landing-split">
             <div className="landing-split__grid app">
               <aside ref={landingDemoRef} className="panel landing-demo" aria-label="Demo stats">
-                <div ref={landingDemoTriggerRef} className="landing-demo__trigger" aria-hidden="true" />
                 <div className="section-heading">
                   <p className="eyebrow">Demo stats</p>
                   <h2>See what the app can track</h2>
@@ -498,32 +472,22 @@ export default function App() {
                         end={24}
                         suffix=" rolls"
                         play={landingDemoVisible}
-                        delayMs={0}
                       />
                     }
                     detail="Example collection for a film shooter"
                     tone="gold"
-                    animate={landingDemoVisible}
-                    delayMs={0}
-                    reveal={landingDemoVisible}
                   />
                   <StatCard
                     label="Most-used camera"
                     value="Nikon FM2"
                     detail="Popular body in the demo library"
                     tone="sage"
-                    animate={landingDemoVisible}
-                    delayMs={120}
-                    reveal={landingDemoVisible}
                   />
                   <StatCard
                     label="Favorite stock"
                     value="Portra 400"
                     detail="Most-used film in the example account"
                     tone="clay"
-                    animate={landingDemoVisible}
-                    delayMs={240}
-                    reveal={landingDemoVisible}
                   />
                   <StatCard
                     label="Development rate"
@@ -533,18 +497,14 @@ export default function App() {
                         end={83}
                         suffix="%"
                         play={landingDemoVisible}
-                        delayMs={360}
                       />
                     }
                     detail="Most rolls already past the darkroom"
                     tone="gold"
-                    animate={landingDemoVisible}
-                    delayMs={360}
-                    reveal={landingDemoVisible}
                   />
                 </div>
 
-                <div className={`landing-demo__notes${landingDemoVisible ? ' landing-demo__notes--visible' : ''}`}>
+                <div className="landing-demo__notes">
                   <div>
                     <span>Logged examples</span>
                     <strong>Loaded, shot, developed, scanned</strong>
