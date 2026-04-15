@@ -1,15 +1,24 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 type StatCardProps = {
   label: string;
   value: ReactNode;
   detail: string;
   tone?: 'gold' | 'sage' | 'clay';
+  animate?: boolean;
+  style?: CSSProperties;
+  className?: string;
 };
 
-export function StatCard({ label, value, detail, tone = 'gold' }: StatCardProps) {
+export function StatCard({ label, value, detail, tone = 'gold', animate = true, style, className }: StatCardProps) {
   return (
-    <article className={`stat-card stat-card--${tone}`}>
+    <article
+      className={`stat-card stat-card--${tone}${className ? ` ${className}` : ''}`}
+      style={{
+        animation: animate ? undefined : 'none',
+        ...style,
+      }}
+    >
       <p className="stat-card__label">{label}</p>
       <h3 className="stat-card__value">{value}</h3>
       <p className="stat-card__detail">{detail}</p>

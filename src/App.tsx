@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AuthPanel, type AuthFormState, type AuthMode } from './components/AuthPanel';
 import { CountUp } from './components/CountUp';
 import { RollForm } from './components/RollForm';
@@ -66,6 +66,8 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [rollLoading, setRollLoading] = useState(false);
   const [rollError, setRollError] = useState<string | null>(null);
+  const [landingDemoVisible, setLandingDemoVisible] = useState(false);
+  const landingDemoRef = useRef<HTMLElement | null>(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -118,6 +120,32 @@ export default function App() {
       active = false;
     };
   }, [token]);
+
+  useEffect(() => {
+    const element = landingDemoRef.current;
+
+    if (!element || typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setLandingDemoVisible(true);
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.28,
+      },
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [sessionUser]);
 
   const handleAuthFieldChange = (field: keyof AuthFormState, value: string) => {
     setAuthForm((current) => ({
@@ -421,7 +449,7 @@ export default function App() {
               </div>
             </div>
           </section>
-          <section className="landing-split">
+          <section ref={landingDemoRef} className="landing-split">
             <div className="landing-split__grid app">
               <aside className="panel landing-demo" aria-label="Demo stats">
                 <div className="section-heading">
@@ -436,17 +464,31 @@ export default function App() {
                 <div className="landing-demo__stats">
                   <StatCard
                     label="Rolls logged"
-                    value={<CountUp className="count-up" end={24} suffix=" rolls" />}
+                    value={<CountUp className="count-up" end={24} suffix=" rolls" play={landingDemoVisible} />}
                     detail="Example collection for a film shooter"
                     tone="gold"
+                    animate={landingDemoVisible}
                   />
-                  <StatCard label="Most-used camera" value="Nikon FM2" detail="Popular body in the demo library" tone="sage" />
-                  <StatCard label="Favorite stock" value="Portra 400" detail="Most-used film in the example account" tone="clay" />
+                  <StatCard
+                    label="Most-used camera"
+                    value="Nikon FM2"
+                    detail="Popular body in the demo library"
+                    tone="sage"
+                    animate={landingDemoVisible}
+                  />
+                  <StatCard
+                    label="Favorite stock"
+                    value="Portra 400"
+                    detail="Most-used film in the example account"
+                    tone="clay"
+                    animate={landingDemoVisible}
+                  />
                   <StatCard
                     label="Development rate"
-                    value={<CountUp className="count-up" end={83} suffix="%" />}
+                    value={<CountUp className="count-up" end={83} suffix="%" play={landingDemoVisible} />}
                     detail="Most rolls already past the darkroom"
                     tone="gold"
+                    animate={landingDemoVisible}
                   />
                 </div>
 

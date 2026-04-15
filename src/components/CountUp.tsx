@@ -7,6 +7,7 @@ type CountUpProps = {
   prefix?: string;
   suffix?: string;
   className?: string;
+  play?: boolean;
 };
 
 function prefersReducedMotion() {
@@ -20,12 +21,19 @@ export function CountUp({
   prefix = '',
   suffix = '',
   className,
+  play = true,
 }: CountUpProps) {
-  const [value, setValue] = useState(() => (prefersReducedMotion() ? end : 0));
+  const [value, setValue] = useState(0);
+  const [hasPlayed, setHasPlayed] = useState(() => prefersReducedMotion() && play);
 
   useEffect(() => {
+    if (!play || hasPlayed) {
+      return;
+    }
+
     if (prefersReducedMotion()) {
       setValue(end);
+      setHasPlayed(true);
       return;
     }
 
@@ -39,6 +47,8 @@ export function CountUp({
 
       if (progress < 1) {
         frame = window.requestAnimationFrame(tick);
+      } else {
+        setHasPlayed(true);
       }
     };
 
@@ -47,7 +57,7 @@ export function CountUp({
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [duration, end]);
+  }, [duration, end, hasPlayed, play]);
 
   return <span className={className}>{`${prefix}${value.toFixed(decimals)}${suffix}`}</span>;
 }
