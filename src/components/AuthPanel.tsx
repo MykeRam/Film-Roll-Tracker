@@ -20,7 +20,6 @@ export function AuthPanel({ mode, form, loading, error, onModeChange, onFieldCha
   return (
     <section className="panel auth-panel">
       <div className="section-heading">
-        <p className="eyebrow">Private workspace</p>
         <h2>Sign up or log in to manage your own rolls</h2>
         <p>
           Every account gets its own roll library. Only the signed-in user can edit or delete the rolls they own, and
