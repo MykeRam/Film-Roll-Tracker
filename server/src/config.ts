@@ -1,4 +1,7 @@
-import 'dotenv/config';
+import { config as loadEnv } from 'dotenv';
+import { resolve } from 'node:path';
+
+loadEnv({ path: resolve(process.cwd(), 'server/.env') });
 
 const defaultOrigins = ['http://127.0.0.1:5173', 'http://localhost:5173'];
 
@@ -20,4 +23,3 @@ export const env = {
   DATABASE_URL: process.env.DATABASE_URL?.trim() || null,
   CLIENT_ORIGINS: parseOrigins(process.env.CLIENT_ORIGIN),
 };
-

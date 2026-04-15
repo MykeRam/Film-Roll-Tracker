@@ -49,7 +49,7 @@ The logged-out landing state now starts with a full-screen hero image area, a ce
 To use PostgreSQL locally:
 
 1. Create a database.
-2. Set `DATABASE_URL` in `server/.env`.
+2. Copy [server/.env.example](/Users/myke/Documents/GitHub/Film-Roll-Tracker/server/.env.example) to [server/.env](/Users/myke/Documents/GitHub/Film-Roll-Tracker/server/.env) and update the connection string if needed.
 3. Apply the schema:
 
 ```bash
