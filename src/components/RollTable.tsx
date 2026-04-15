@@ -2,6 +2,7 @@ import type { FilmRoll, RollStatus } from '../types';
 
 type RollTableProps = {
   rolls: FilmRoll[];
+  currentUserId: string | null;
   onEdit: (roll: FilmRoll) => void;
   onStatusChange: (id: string, status: RollStatus) => void;
   onDelete: (id: string) => void;
@@ -24,7 +25,7 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-export function RollTable({ rolls, onEdit, onStatusChange, onDelete }: RollTableProps) {
+export function RollTable({ rolls, currentUserId, onEdit, onStatusChange, onDelete }: RollTableProps) {
   return (
     <section className="panel table-panel" id="roll-library">
       <div className="section-heading">
@@ -71,6 +72,7 @@ export function RollTable({ rolls, onEdit, onStatusChange, onDelete }: RollTable
                     className="table-status-select"
                     value={roll.status}
                     aria-label={`Change status for ${roll.title}`}
+                    disabled={roll.userId !== currentUserId}
                     onChange={(event) => onStatusChange(roll.id, event.target.value as RollStatus)}
                   >
                     {statusOptions.map((status) => (
@@ -83,10 +85,10 @@ export function RollTable({ rolls, onEdit, onStatusChange, onDelete }: RollTable
                 <td>{formatDate(roll.dateLoaded)}</td>
                 <td>
                   <div className="row-actions">
-                    <button className="secondary-button" type="button" onClick={() => onEdit(roll)}>
+                    <button className="secondary-button" type="button" onClick={() => onEdit(roll)} disabled={roll.userId !== currentUserId}>
                       Edit
                     </button>
-                    <button className="ghost-button" type="button" onClick={() => onDelete(roll.id)}>
+                    <button className="ghost-button" type="button" onClick={() => onDelete(roll.id)} disabled={roll.userId !== currentUserId}>
                       Delete
                     </button>
                   </div>

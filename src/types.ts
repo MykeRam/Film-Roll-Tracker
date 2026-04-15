@@ -1,7 +1,20 @@
 export type RollStatus = 'loaded' | 'shot' | 'developed' | 'scanned';
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+}
+
+export interface AuthSession {
+  user: User;
+  token: string;
+}
+
 export interface FilmRoll {
   id: string;
+  userId: string;
   title: string;
   camera: string;
   lens: string;

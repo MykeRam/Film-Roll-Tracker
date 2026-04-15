@@ -1,9 +1,7 @@
-import type { FilmRoll } from '../types';
+import type { RollInput } from '../types.js';
 
-export const mockRolls: FilmRoll[] = [
+export const defaultRollSeeds: RollInput[] = [
   {
-    id: 'roll-001',
-    userId: 'seed-user',
     title: 'Winter street session',
     camera: 'Nikon FM2',
     lens: 'Nikkor 50mm f/1.8',
@@ -14,8 +12,6 @@ export const mockRolls: FilmRoll[] = [
     notes: 'Soft overcast light and a lot of candid frames.',
   },
   {
-    id: 'roll-002',
-    userId: 'seed-user',
     title: 'Portrait test run',
     camera: 'Canon AE-1',
     lens: 'FD 50mm f/1.4',
@@ -26,8 +22,6 @@ export const mockRolls: FilmRoll[] = [
     notes: 'Color palette leaned warm and nostalgic.',
   },
   {
-    id: 'roll-003',
-    userId: 'seed-user',
     title: 'Night market walk',
     camera: 'Olympus XA',
     lens: 'Fixed 35mm f/2.8',
@@ -38,8 +32,6 @@ export const mockRolls: FilmRoll[] = [
     notes: 'Low-light frames need careful metering.',
   },
   {
-    id: 'roll-004',
-    userId: 'seed-user',
     title: 'Landscape practice',
     camera: 'Mamiya 645',
     lens: 'Sekor C 80mm f/2.8',
@@ -48,17 +40,5 @@ export const mockRolls: FilmRoll[] = [
     status: 'loaded',
     dateLoaded: '2026-04-07',
     notes: 'Sent for development and waiting on scans.',
-  },
-  {
-    id: 'roll-005',
-    userId: 'seed-user',
-    title: 'Black and white study',
-    camera: 'Pentax K1000',
-    lens: 'SMC Pentax 55mm f/1.8',
-    filmStock: 'Ilford HP5 Plus',
-    iso: 400,
-    status: 'scanned',
-    dateLoaded: '2026-02-21',
-    notes: 'Completed roll used for contrast and shadow practice.',
   },
 ];

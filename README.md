@@ -38,6 +38,9 @@ The backend now includes a JWT auth scaffold in `server/`:
 - `GET /auth/me`
 - PostgreSQL-ready user storage
 - In-memory fallback for local development without a database
+- User-owned rolls with edit/delete permissions enforced on the server
+
+The frontend authenticates against the API, loads only the signed-in user’s rolls, and only enables edit/delete actions for rolls owned by that account.
 
 Run the API separately:
 

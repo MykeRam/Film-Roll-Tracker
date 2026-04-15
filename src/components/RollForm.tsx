@@ -3,6 +3,7 @@ import type { RollDraft, RollStatus } from '../types';
 type RollFormProps = {
   draft: RollDraft;
   mode: 'create' | 'edit';
+  loading: boolean;
   onFieldChange: (field: keyof RollDraft, value: string) => void;
   onStatusChange: (value: RollStatus) => void;
   onSubmit: () => void;
@@ -16,7 +17,7 @@ const statuses: { value: RollStatus; label: string }[] = [
   { value: 'scanned', label: 'Scanned' },
 ];
 
-export function RollForm({ draft, mode, onFieldChange, onStatusChange, onSubmit, onCancel }: RollFormProps) {
+export function RollForm({ draft, mode, loading, onFieldChange, onStatusChange, onSubmit, onCancel }: RollFormProps) {
   return (
     <form
       className="panel form-panel"
@@ -91,12 +92,12 @@ export function RollForm({ draft, mode, onFieldChange, onStatusChange, onSubmit,
         <p className="form-hint">This scaffold is wired for local state now and can be switched to an API later.</p>
         <div className="form-actions__buttons">
           {mode === 'edit' ? (
-            <button className="secondary-button" type="button" onClick={onCancel}>
+            <button className="secondary-button" type="button" onClick={onCancel} disabled={loading}>
               Cancel
             </button>
           ) : null}
-          <button className="primary-button" type="submit">
-            {mode === 'edit' ? 'Update roll' : 'Save roll'}
+          <button className="primary-button" type="submit" disabled={loading}>
+            {loading ? 'Saving...' : mode === 'edit' ? 'Update roll' : 'Save roll'}
           </button>
         </div>
       </div>

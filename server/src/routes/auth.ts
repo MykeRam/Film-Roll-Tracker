@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { ZodError, z } from 'zod';
 import { requireAuth } from '../middleware/requireAuth.js';
+import { defaultRollSeeds } from '../seed/defaultRolls.js';
+import type { RollStore } from '../store/rollStore.js';
 import { toPublicUserRecord, type UserStore } from '../store/userStore.js';
 
 const authSchema = z.object({
@@ -20,6 +22,7 @@ const loginSchema = authSchema.pick({
 type CreateAuthRouterParams = {
   jwtSecret: string;
   userStore: UserStore;
+  rollStore: RollStore;
 };
 
 function signToken(userId: string, email: string, jwtSecret: string) {
@@ -42,7 +45,7 @@ function handleValidationError(error: unknown) {
   return null;
 }
 
-export function createAuthRouter({ jwtSecret, userStore }: CreateAuthRouterParams) {
+export function createAuthRouter({ jwtSecret, userStore, rollStore }: CreateAuthRouterParams) {
   const router = Router();
 
   router.post('/register', async (req, res, next) => {
@@ -60,6 +63,10 @@ export function createAuthRouter({ jwtSecret, userStore }: CreateAuthRouterParam
         email: parsed.email,
         passwordHash,
       });
+
+      for (const seed of defaultRollSeeds) {
+        await rollStore.create(createdUser.id, seed);
+      }
 
       const token = signToken(createdUser.id, createdUser.email, jwtSecret);
 
@@ -119,4 +126,3 @@ export function createAuthRouter({ jwtSecret, userStore }: CreateAuthRouterParam
 
   return router;
 }
-

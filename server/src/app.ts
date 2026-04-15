@@ -2,16 +2,18 @@ import cors from 'cors';
 import express from 'express';
 import { env } from './config.js';
 import { createAuthRouter } from './routes/auth.js';
+import { createRollRouter } from './routes/rolls.js';
+import { InMemoryRollStore, PostgresRollStore } from './store/rollStore.js';
 import { InMemoryUserStore, PostgresUserStore } from './store/userStore.js';
 import type { Pool } from 'pg';
 import { Pool as PgPool } from 'pg';
 
-function createUserStore() {
+function createStores() {
   if (!env.DATABASE_URL) {
     return {
-      store: new InMemoryUserStore(),
+      userStore: new InMemoryUserStore(),
+      rollStore: new InMemoryRollStore(),
       mode: 'memory' as const,
-      pool: null,
     };
   }
 
@@ -20,14 +22,15 @@ function createUserStore() {
   });
 
   return {
-    store: new PostgresUserStore(pool as Pool),
+    userStore: new PostgresUserStore(pool as Pool),
+    rollStore: new PostgresRollStore(pool as Pool),
     mode: 'postgres' as const,
     pool,
   };
 }
 
 export function createApp() {
-  const { store, mode } = createUserStore();
+  const { userStore, rollStore, mode } = createStores();
   const app = express();
 
   app.use(
@@ -45,7 +48,8 @@ export function createApp() {
     });
   });
 
-  app.use('/auth', createAuthRouter({ jwtSecret: env.JWT_SECRET, userStore: store }));
+  app.use('/auth', createAuthRouter({ jwtSecret: env.JWT_SECRET, userStore, rollStore }));
+  app.use('/rolls', createRollRouter({ jwtSecret: env.JWT_SECRET, userStore, rollStore }));
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not found' });
@@ -53,4 +57,3 @@ export function createApp() {
 
   return app;
 }
-

@@ -1,20 +1,46 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { AuthPanel, type AuthFormState, type AuthMode } from './components/AuthPanel';
 import { RollForm } from './components/RollForm';
 import { RollTable } from './components/RollTable';
 import { StatCard } from './components/StatCard';
-import { mockRolls } from './data/mockRolls';
-import type { FilmRoll, RollDraft, RollStatus } from './types';
+import {
+  createRoll,
+  deleteRoll as apiDeleteRoll,
+  getSession,
+  isRollOwner,
+  listRolls,
+  login,
+  register,
+  updateRoll,
+} from './lib/api';
+import type { AuthSession, FilmRoll, RollDraft, RollStatus, User } from './types';
 
-const initialDraft: RollDraft = {
-  title: '',
-  camera: '',
-  lens: '',
-  filmStock: '',
-  iso: '400',
-  status: 'loaded',
-  dateLoaded: new Date().toISOString().slice(0, 10),
-  notes: '',
-};
+const TOKEN_KEY = 'film-roll-tracker-token';
+
+function todayValue() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function createInitialDraft(): RollDraft {
+  return {
+    title: '',
+    camera: '',
+    lens: '',
+    filmStock: '',
+    iso: '400',
+    status: 'loaded',
+    dateLoaded: todayValue(),
+    notes: '',
+  };
+}
+
+function createInitialAuthForm(): AuthFormState {
+  return {
+    name: '',
+    email: '',
+    password: '',
+  };
+}
 
 const statusOrder: RollStatus[] = ['loaded', 'shot', 'developed', 'scanned'];
 
@@ -22,19 +48,121 @@ function formatCount(value: number, noun: string) {
   return `${value} ${noun}${value === 1 ? '' : 's'}`;
 }
 
-function toId(prefix: string) {
-  const suffix = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID().slice(0, 8) : String(Date.now());
-  return `${prefix}-${suffix}`;
-}
-
 export default function App() {
-  const [rolls, setRolls] = useState<FilmRoll[]>(mockRolls);
-  const [draft, setDraft] = useState<RollDraft>(initialDraft);
+  const [appLoading, setAppLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+  const [sessionUser, setSessionUser] = useState<User | null>(null);
+  const [rolls, setRolls] = useState<FilmRoll[]>([]);
+  const [draft, setDraft] = useState<RollDraft>(createInitialDraft);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<RollStatus | 'all'>('all');
   const [cameraFilter, setCameraFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [authMode, setAuthMode] = useState<AuthMode>('register');
+  const [authForm, setAuthForm] = useState<AuthFormState>(createInitialAuthForm);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [rollLoading, setRollLoading] = useState(false);
+  const [rollError, setRollError] = useState<string | null>(null);
+
+  const clearSession = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    setToken(null);
+    setSessionUser(null);
+    setRolls([]);
+    setDraft(createInitialDraft());
+    setEditingId(null);
+  };
+
+  useEffect(() => {
+    let active = true;
+
+    async function bootstrap() {
+      if (!token) {
+        if (active) {
+          setAppLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const [session, userRolls] = await Promise.all([getSession(token), listRolls(token)]);
+
+        if (!active) {
+          return;
+        }
+
+        if (!session.user) {
+          clearSession();
+          return;
+        }
+
+        setSessionUser(session.user);
+        setRolls(userRolls);
+      } catch {
+        if (active) {
+          clearSession();
+        }
+      } finally {
+        if (active) {
+          setAppLoading(false);
+        }
+      }
+    }
+
+    void bootstrap();
+
+    return () => {
+      active = false;
+    };
+  }, [token]);
+
+  const handleAuthFieldChange = (field: keyof AuthFormState, value: string) => {
+    setAuthForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
+
+  const handleAuthSubmit = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      const session: AuthSession =
+        authMode === 'register'
+          ? await register({
+              name: authForm.name.trim(),
+              email: authForm.email.trim(),
+              password: authForm.password,
+            })
+          : await login({
+              email: authForm.email.trim(),
+              password: authForm.password,
+            });
+      localStorage.setItem(TOKEN_KEY, session.token);
+      setToken(session.token);
+      setSessionUser(session.user);
+      setRolls(await listRolls(session.token));
+      setAuthForm(createInitialAuthForm());
+      setDraft(createInitialDraft());
+      setEditingId(null);
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Failed to authenticate.');
+    } finally {
+      setAuthLoading(false);
+      setAppLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setAuthError(null);
+    setRollError(null);
+    setAuthForm(createInitialAuthForm());
+    setAuthMode('login');
+  };
 
   const cameraOptions = useMemo(() => [...new Set(rolls.map((roll) => roll.camera))].sort(), [rolls]);
   const stockOptions = useMemo(() => [...new Set(rolls.map((roll) => roll.filmStock))].sort(), [rolls]);
@@ -97,10 +225,31 @@ export default function App() {
 
   const resetDraft = () => {
     setEditingId(null);
-    setDraft(initialDraft);
+    setDraft(createInitialDraft());
+    setRollError(null);
   };
 
-  const handleSubmit = () => {
+  const requireToken = () => {
+    if (!token || !sessionUser) {
+      throw new Error('You need to sign in again.');
+    }
+
+    return token;
+  };
+
+  const buildRollPayload = (current: RollDraft) => ({
+    title: current.title.trim(),
+    camera: current.camera.trim(),
+    lens: current.lens.trim(),
+    filmStock: current.filmStock.trim(),
+    iso: current.iso,
+    status: current.status,
+    dateLoaded: current.dateLoaded,
+    notes: current.notes.trim(),
+  });
+
+  const handleSubmit = async () => {
+    const currentToken = requireToken();
     const isoValue = Number(draft.iso);
 
     if (
@@ -114,44 +263,44 @@ export default function App() {
       return;
     }
 
-    if (editingId) {
-      setRolls((current) =>
-        current.map((roll) =>
-          roll.id === editingId
-            ? {
-                ...roll,
-                title: draft.title.trim(),
-                camera: draft.camera.trim(),
-                lens: draft.lens.trim(),
-                filmStock: draft.filmStock.trim(),
-                iso: isoValue,
-                status: draft.status,
-                dateLoaded: draft.dateLoaded,
-                notes: draft.notes.trim(),
-              }
-            : roll,
-        ),
-      );
-    } else {
-      const nextRoll: FilmRoll = {
-        id: toId('roll'),
-        title: draft.title.trim(),
-        camera: draft.camera.trim(),
-        lens: draft.lens.trim(),
-        filmStock: draft.filmStock.trim(),
-        iso: isoValue,
-        status: draft.status,
-        dateLoaded: draft.dateLoaded,
-        notes: draft.notes.trim(),
-      };
+    setRollLoading(true);
+    setRollError(null);
 
-      setRolls((current) => [nextRoll, ...current]);
+    try {
+      const payload = buildRollPayload(draft);
+
+      if (editingId) {
+        const existingRoll = rolls.find((roll) => roll.id === editingId);
+
+        if (!existingRoll) {
+          throw new Error('Roll not found.');
+        }
+
+        if (!isRollOwner(existingRoll, sessionUser?.id)) {
+          throw new Error('You can only edit your own rolls.');
+        }
+
+        const updatedRoll = await updateRoll(currentToken, editingId, payload);
+        setRolls((current) => current.map((roll) => (roll.id === editingId ? updatedRoll : roll)));
+      } else {
+        const createdRoll = await createRoll(currentToken, payload);
+        setRolls((current) => [createdRoll, ...current]);
+      }
+
+      resetDraft();
+    } catch (error) {
+      setRollError(error instanceof Error ? error.message : 'Unable to save this roll.');
+    } finally {
+      setRollLoading(false);
     }
-
-    resetDraft();
   };
 
   const handleEdit = (roll: FilmRoll) => {
+    if (!isRollOwner(roll, sessionUser?.id)) {
+      setRollError('You can only edit your own rolls.');
+      return;
+    }
+
     setEditingId(roll.id);
     setDraft({
       title: roll.title,
@@ -163,29 +312,141 @@ export default function App() {
       dateLoaded: roll.dateLoaded,
       notes: roll.notes,
     });
+    setRollError(null);
   };
 
-  const updateStatus = (id: string, status: RollStatus) => {
-    setRolls((current) => current.map((roll) => (roll.id === id ? { ...roll, status } : roll)));
-  };
+  const updateStatus = async (id: string, status: RollStatus) => {
+    const currentToken = requireToken();
+    const targetRoll = rolls.find((roll) => roll.id === id);
 
-  const deleteRoll = (id: string) => {
-    setRolls((current) => current.filter((roll) => roll.id !== id));
-    if (editingId === id) {
-      resetDraft();
+    if (!targetRoll) {
+      return;
+    }
+
+    if (!isRollOwner(targetRoll, sessionUser?.id)) {
+      setRollError('You can only edit your own rolls.');
+      return;
+    }
+
+    setRollError(null);
+
+    try {
+      const updatedRoll = await updateRoll(currentToken, id, {
+        title: targetRoll.title,
+        camera: targetRoll.camera,
+        lens: targetRoll.lens,
+        filmStock: targetRoll.filmStock,
+        iso: String(targetRoll.iso),
+        status,
+        dateLoaded: targetRoll.dateLoaded,
+        notes: targetRoll.notes,
+      });
+
+      setRolls((current) => current.map((roll) => (roll.id === id ? updatedRoll : roll)));
+    } catch (error) {
+      setRollError(error instanceof Error ? error.message : 'Unable to update this roll.');
     }
   };
+
+  const deleteRoll = async (id: string) => {
+    const currentToken = requireToken();
+    const targetRoll = rolls.find((roll) => roll.id === id);
+
+    if (!targetRoll) {
+      return;
+    }
+
+    if (!isRollOwner(targetRoll, sessionUser?.id)) {
+      setRollError('You can only delete your own rolls.');
+      return;
+    }
+
+    setRollError(null);
+
+    try {
+      await apiDeleteRoll(currentToken, id);
+      setRolls((current) => current.filter((roll) => roll.id !== id));
+
+      if (editingId === id) {
+        resetDraft();
+      }
+    } catch (error) {
+      setRollError(error instanceof Error ? error.message : 'Unable to delete this roll.');
+    }
+  };
+
+  if (appLoading) {
+    return (
+      <div className="app-shell">
+        <main className="app">
+          <section className="panel auth-panel auth-panel--loading">
+            <p className="eyebrow">Film Roll Tracker</p>
+            <h1>Loading your workspace</h1>
+            <p className="hero__lede">Restoring your session and roll library.</p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (!sessionUser) {
+    return (
+      <div className="app-shell">
+        <main className="app auth-layout">
+          <section className="hero panel">
+            <div className="hero__copy">
+              <p className="eyebrow">Private workspace</p>
+              <h1>Film Roll Tracker</h1>
+              <p className="hero__lede">
+                Sign up to create your own private roll library. The server keeps each account isolated, so only the
+                signed-in user can edit or delete their rolls.
+              </p>
+
+              <div className="hero__actions">
+                <span className="secondary-button">User-owned rolls</span>
+                <span className="secondary-button">JWT auth</span>
+                <span className="secondary-button">Permission checks</span>
+              </div>
+
+              <div className="mini-summary">
+                <div>
+                  <span>Signup flow</span>
+                  <strong>Creates starter rolls automatically</strong>
+                </div>
+                <div>
+                  <span>Access model</span>
+                  <strong>Only owners can modify their entries</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <AuthPanel
+            mode={authMode}
+            form={authForm}
+            loading={authLoading}
+            error={authError}
+            onModeChange={setAuthMode}
+            onFieldChange={handleAuthFieldChange}
+            onSubmit={() => {
+              void handleAuthSubmit();
+            }}
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
       <main className="app">
         <header className="hero panel">
           <div className="hero__copy">
-            <p className="eyebrow">Portfolio project scaffold</p>
+            <p className="eyebrow">Signed in as {sessionUser.name}</p>
             <h1>Film Roll Tracker</h1>
             <p className="hero__lede">
               A portfolio-ready tracker for film photographers to log rolls, record camera, lens, stock, and date
-              loaded, update development status, and review shooting history from a single dashboard.
+              loaded, update development status, and keep editing rights scoped to the signed-in user.
             </p>
 
             <div className="hero__actions">
@@ -195,16 +456,19 @@ export default function App() {
               <a className="secondary-button" href="#roll-library">
                 View library
               </a>
+              <button className="ghost-button" type="button" onClick={handleLogout}>
+                Log out
+              </button>
             </div>
 
             <div className="mini-summary">
               <div>
-                <span>Core focus</span>
-                <strong>CRUD + dashboard UX</strong>
+                <span>Access control</span>
+                <strong>Only owners can edit and delete</strong>
               </div>
               <div>
-                <span>Future layer</span>
-                <strong>Auth, API, analytics</strong>
+                <span>Session</span>
+                <strong>{sessionUser.email}</strong>
               </div>
             </div>
           </div>
@@ -219,8 +483,8 @@ export default function App() {
                   detail={`${stats.loadedRolls + stats.shotRolls} still active`}
                   tone="gold"
                 />
-                <StatCard label="Most-used camera" value={stats.favoriteCamera} detail="Based on the current log" tone="sage" />
-                <StatCard label="Favorite stock" value={stats.favoriteFilm} detail="Most frequent film in the archive" tone="clay" />
+                <StatCard label="Most-used camera" value={stats.favoriteCamera} detail="Based on your library" tone="sage" />
+                <StatCard label="Favorite stock" value={stats.favoriteFilm} detail="Most frequent film in your account" tone="clay" />
                 <StatCard
                   label="Development rate"
                   value={`${stats.developmentRate}%`}
@@ -264,7 +528,7 @@ export default function App() {
 
             <div className="insight-callout">
               <strong>{formatCount(stats.loadedRolls + stats.shotRolls, 'active roll')}</strong>
-              <span>{formatCount(stats.scannedRolls, 'scanned roll')} already archived in the library</span>
+              <span>{formatCount(stats.scannedRolls, 'scanned roll')} already archived in your account</span>
             </div>
           </article>
 
@@ -323,16 +587,31 @@ export default function App() {
           <StatCard label="Scanned rolls" value={formatCount(stats.scannedRolls, 'roll')} detail="Ready for sharing or archiving" tone="gold" />
         </section>
 
+        {rollError ? <p className="panel-note panel-note--error">{rollError}</p> : null}
+
         <RollForm
           draft={draft}
           mode={editingId ? 'edit' : 'create'}
+          loading={rollLoading}
           onFieldChange={handleFieldChange}
           onStatusChange={(value) => handleFieldChange('status', value)}
-          onSubmit={handleSubmit}
+          onSubmit={() => {
+            void handleSubmit();
+          }}
           onCancel={resetDraft}
         />
 
-        <RollTable rolls={visibleRolls} onEdit={handleEdit} onStatusChange={updateStatus} onDelete={deleteRoll} />
+        <RollTable
+          rolls={visibleRolls}
+          currentUserId={sessionUser.id}
+          onEdit={handleEdit}
+          onStatusChange={(id, status) => {
+            void updateStatus(id, status);
+          }}
+          onDelete={(id) => {
+            void deleteRoll(id);
+          }}
+        />
 
         <section className="panel roadmap-panel">
           <div className="section-heading">
@@ -340,7 +619,7 @@ export default function App() {
             <h2>Scaffold ready for the next layer</h2>
             <p>
               The front-end foundation is in place. The next step is wiring this model to a database, then connecting
-              the frontend to authentication, uploads, activity history, and better analytics.
+              the frontend to uploads, activity history, and deeper analytics.
             </p>
           </div>
 
@@ -355,7 +634,7 @@ export default function App() {
             </div>
             <div>
               <span>Full-stack path</span>
-              <strong>REST API, JWT auth scaffold, persistence, and user profiles</strong>
+              <strong>REST API, JWT auth, persistence, and user profiles</strong>
             </div>
           </div>
         </section>
