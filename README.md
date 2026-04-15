@@ -29,6 +29,24 @@ Film Roll Tracker is a portfolio project for film photographers who want to log 
 - Cloudinary or similar for image upload
 - Chart.js or Recharts
 
+## Auth Scaffold
+
+The backend now includes a JWT auth scaffold in `server/`:
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
+- PostgreSQL-ready user storage
+- In-memory fallback for local development without a database
+
+Run the API separately:
+
+```bash
+npm run dev:api
+```
+
+To use PostgreSQL, set the environment variables in `server/.env.example` and apply `server/schema.sql`.
+
 ## Why This Works Well
 
 - It shows full CRUD instead of a static showcase app
@@ -42,4 +60,3 @@ Film Roll Tracker is a portfolio project for film photographers who want to log 
 npm install
 npm run dev
 ```
-

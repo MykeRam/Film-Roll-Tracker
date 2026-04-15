@@ -339,8 +339,8 @@ export default function App() {
             <p className="eyebrow">Roadmap</p>
             <h2>Scaffold ready for the next layer</h2>
             <p>
-              The front-end foundation is in place. The next step is wiring this model to a database, then layering on
-              authentication, uploads, activity history, and better analytics.
+              The front-end foundation is in place. The next step is wiring this model to a database, then connecting
+              the frontend to authentication, uploads, activity history, and better analytics.
             </p>
           </div>
 
@@ -355,7 +355,7 @@ export default function App() {
             </div>
             <div>
               <span>Full-stack path</span>
-              <strong>REST API, JWT auth, persistence, and user profiles</strong>
+              <strong>REST API, JWT auth scaffold, persistence, and user profiles</strong>
             </div>
           </div>
         </section>
