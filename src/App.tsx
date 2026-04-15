@@ -420,19 +420,50 @@ export default function App() {
               </div>
             </div>
           </section>
-          <section className="landing-auth-section" id="signup">
-            <div className="app landing-auth-wrap">
-              <AuthPanel
-                mode={authMode}
-                form={authForm}
-                loading={authLoading}
-                error={authError}
-                onModeChange={setAuthMode}
-                onFieldChange={handleAuthFieldChange}
-                onSubmit={() => {
-                  void handleAuthSubmit();
-                }}
-              />
+          <section className="landing-split">
+            <div className="landing-split__grid app">
+              <aside className="panel landing-demo" aria-label="Demo stats">
+                <div className="section-heading">
+                  <p className="eyebrow">Demo stats</p>
+                  <h2>See what the app can track</h2>
+                  <p>
+                    This example shows the kind of roll history, workflow tracking, and analytics a logged-in user can
+                    manage inside their own account.
+                  </p>
+                </div>
+
+                <div className="landing-demo__stats">
+                  <StatCard label="Rolls logged" value="24 rolls" detail="Example collection for a film shooter" tone="gold" />
+                  <StatCard label="Most-used camera" value="Nikon FM2" detail="Popular body in the demo library" tone="sage" />
+                  <StatCard label="Favorite stock" value="Portra 400" detail="Most-used film in the example account" tone="clay" />
+                  <StatCard label="Development rate" value="83%" detail="Most rolls already past the darkroom" tone="gold" />
+                </div>
+
+                <div className="landing-demo__notes">
+                  <div>
+                    <span>Logged examples</span>
+                    <strong>Loaded, shot, developed, scanned</strong>
+                  </div>
+                  <div>
+                    <span>Access model</span>
+                    <strong>Owners control their own roll edits</strong>
+                  </div>
+                </div>
+              </aside>
+
+              <div className="landing-auth-column" id="signup">
+                <AuthPanel
+                  mode={authMode}
+                  form={authForm}
+                  loading={authLoading}
+                  error={authError}
+                  onModeChange={setAuthMode}
+                  onFieldChange={handleAuthFieldChange}
+                  onSubmit={() => {
+                    void handleAuthSubmit();
+                  }}
+                />
+              </div>
             </div>
           </section>
         </main>

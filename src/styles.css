@@ -183,13 +183,62 @@ svg {
   background: #ffffff;
 }
 
-.landing-auth-wrap {
-  padding-top: 40px;
-  padding-bottom: 48px;
+.landing-split {
+  background: #ffffff;
+  padding: 40px 0 56px;
 }
 
 .landing-hero__panel {
   display: none;
+}
+
+.landing-split__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.landing-demo,
+.landing-auth-column {
+  width: 100%;
+}
+
+.landing-demo {
+  padding: 28px;
+}
+
+.landing-demo__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.landing-demo__notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.landing-demo__notes div {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.02);
+  padding: 16px;
+}
+
+.landing-demo__notes span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.landing-demo__notes strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--text);
+  font-weight: 700;
 }
 
 .panel,
@@ -359,6 +408,10 @@ h1 {
 .landing-hero .auth-panel {
   background: rgba(255, 255, 255, 0.92);
   border-color: var(--line);
+}
+
+.landing-auth-column .auth-panel {
+  height: 100%;
 }
 
 .auth-panel--loading {
@@ -762,6 +815,10 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
+  .landing-split__grid {
+    grid-template-columns: 1fr;
+  }
+
   .stats-grid,
   .roadmap-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -781,6 +838,10 @@ tbody tr:hover {
 
   .landing-header {
     align-items: flex-start;
+  }
+
+  .landing-split {
+    padding: 20px 0 40px;
   }
 
   .hero,
@@ -804,6 +865,8 @@ tbody tr:hover {
     flex-direction: column;
   }
 
+  .landing-demo__stats,
+  .landing-demo__notes,
   .mini-summary,
   .snapshot-grid,
   .form-grid,
