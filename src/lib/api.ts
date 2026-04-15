@@ -35,9 +35,10 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       payload = null;
     }
 
-    const message = payload?.message ?? `Request failed with status ${response.status}`;
+    const payloadMessage = payload?.message?.trim() ?? '';
+    const message = payloadMessage || `Request failed with status ${response.status}`;
     const issues = payload?.issues?.map((issue) => `${issue.path}: ${issue.message}`) ?? [];
-    const detail = !payload?.message && responseText ? responseText : '';
+    const detail = !payloadMessage && responseText && !responseText.trim().startsWith('{') ? responseText : '';
     throw new Error([message, ...issues, detail].filter(Boolean).join(' '));
   }
 

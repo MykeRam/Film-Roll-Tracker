@@ -60,14 +60,24 @@ export function createAuthRouter({ jwtSecret, userStore, rollStore }: CreateAuth
       }
 
       const passwordHash = await bcrypt.hash(parsed.password, 12);
-      const createdUser = await userStore.create({
-        name: parsed.name,
-        email: parsed.email,
-        passwordHash,
-      });
+      let createdUser;
+
+      try {
+        createdUser = await userStore.create({
+          name: parsed.name,
+          email: parsed.email,
+          passwordHash,
+        });
+      } catch (error) {
+        throw new Error(`Failed to create user account for ${parsed.email}.`, { cause: error });
+      }
 
       for (const seed of defaultRollSeeds) {
-        await rollStore.create(createdUser.id, seed);
+        try {
+          await rollStore.create(createdUser.id, seed);
+        } catch (error) {
+          throw new Error(`Failed to seed starter roll "${seed.title}".`, { cause: error });
+        }
       }
 
       const token = signToken(createdUser.id, createdUser.email, jwtSecret);
