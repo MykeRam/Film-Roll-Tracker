@@ -136,7 +136,8 @@ export default function App() {
         }
       },
       {
-        threshold: 0.28,
+        threshold: 0.6,
+        rootMargin: '0px 0px -10% 0px',
       },
     );
 
@@ -449,9 +450,9 @@ export default function App() {
               </div>
             </div>
           </section>
-          <section ref={landingDemoRef} className="landing-split">
+          <section className="landing-split">
             <div className="landing-split__grid app">
-              <aside className="panel landing-demo" aria-label="Demo stats">
+              <aside ref={landingDemoRef} className="panel landing-demo" aria-label="Demo stats">
                 <div className="section-heading">
                   <p className="eyebrow">Demo stats</p>
                   <h2>See what the app can track</h2>
