@@ -101,6 +101,8 @@ svg {
 .landing-hero {
   position: relative;
   min-height: 100svh;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
   overflow: hidden;
   border-radius: 0;
   border: 0;
@@ -115,6 +117,7 @@ svg {
   background-size: cover;
   background-position: center;
   transform: scale(1.02);
+  border-radius: 0;
 }
 
 .landing-hero__overlay {
@@ -123,6 +126,7 @@ svg {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.08) 100%),
     linear-gradient(90deg, rgba(9, 12, 15, 0.28), rgba(9, 12, 15, 0.14) 46%, rgba(9, 12, 15, 0.26));
+  border-radius: 0;
 }
 
 .landing-hero__content {
