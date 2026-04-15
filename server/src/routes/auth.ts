@@ -53,6 +53,7 @@ export function createAuthRouter({ jwtSecret, userStore, rollStore }: CreateAuth
   router.post('/register', async (req, res, next) => {
     try {
       const parsed = registerSchema.parse(req.body);
+      console.log(`[auth/register] start ${parsed.email}`);
       const existingUser = await userStore.findByEmail(parsed.email);
 
       if (existingUser) {
@@ -87,6 +88,7 @@ export function createAuthRouter({ jwtSecret, userStore, rollStore }: CreateAuth
         token,
       });
     } catch (error) {
+      console.error('[auth/register] failed', error);
       const validationError = handleValidationError(error);
 
       if (validationError) {
@@ -100,6 +102,7 @@ export function createAuthRouter({ jwtSecret, userStore, rollStore }: CreateAuth
   router.post('/login', async (req, res, next) => {
     try {
       const parsed = loginSchema.parse(req.body);
+      console.log(`[auth/login] start ${parsed.email}`);
       const user = await userStore.findByEmail(parsed.email);
 
       if (!user) {
@@ -119,6 +122,7 @@ export function createAuthRouter({ jwtSecret, userStore, rollStore }: CreateAuth
         token,
       });
     } catch (error) {
+      console.error('[auth/login] failed', error);
       const validationError = handleValidationError(error);
 
       if (validationError) {
