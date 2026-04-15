@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --open",
     "dev:api": "tsx server/src/index.ts",
+    "db:setup": "tsx server/src/scripts/setupDatabase.ts",
     "build": "tsc -b && vite build",
     "build:api": "tsc -p server/tsconfig.json",
     "preview": "vite preview"

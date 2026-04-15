@@ -44,13 +44,25 @@ The frontend authenticates against the API, loads only the signed-in user’s ro
 
 The logged-out landing state now starts with a full-screen hero image area, a centered main title, and a sign-up button in the top-right header bar. Drop your image at `public/hero.jpg` and it will render in the hero automatically. Below that, the page splits into demo stats on the left and the sign-up/login box on the right.
 
+## Database Setup
+
+To use PostgreSQL locally:
+
+1. Create a database.
+2. Set `DATABASE_URL` in `server/.env`.
+3. Apply the schema:
+
+```bash
+npm run db:setup
+```
+
+The setup script reads `server/schema.sql` and creates the `users` and `rolls` tables if they do not already exist.
+
 Run the API separately:
 
 ```bash
 npm run dev:api
 ```
-
-To use PostgreSQL, set the environment variables in `server/.env.example` and apply `server/schema.sql`.
 
 ## Why This Works Well
 
@@ -63,5 +75,7 @@ To use PostgreSQL, set the environment variables in `server/.env.example` and ap
 
 ```bash
 npm install
+npm run db:setup
+npm run dev:api
 npm run dev
 ```
