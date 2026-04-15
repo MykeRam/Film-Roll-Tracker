@@ -73,11 +73,10 @@ export default function App() {
   const [authForm, setAuthForm] = useState<AuthFormState>(createInitialAuthForm);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
-  const [authTransitioning, setAuthTransitioning] = useState(false);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [rollLoading, setRollLoading] = useState(false);
   const [rollError, setRollError] = useState<string | null>(null);
-  const authSuccessTimerRef = useRef<number | null>(null);
+  const authNoticeTimerRef = useRef<number | null>(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -86,15 +85,16 @@ export default function App() {
     setRolls([]);
     setDraft(createInitialDraft());
     setEditingId(null);
-    setAuthSuccess(null);
-    setAuthTransitioning(false);
+    setAuthError(null);
+    setAuthNotice(null);
+    setRollError(null);
   };
 
   useEffect(() => {
     let active = true;
 
     async function bootstrap() {
-      if (!token || authTransitioning) {
+      if (!token || sessionUser) {
         if (active) {
           setAppLoading(false);
         }
@@ -131,12 +131,12 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, [authTransitioning, token]);
+  }, [sessionUser, token]);
 
   useEffect(() => {
     return () => {
-      if (authSuccessTimerRef.current) {
-        window.clearTimeout(authSuccessTimerRef.current);
+      if (authNoticeTimerRef.current) {
+        window.clearTimeout(authNoticeTimerRef.current);
       }
     };
   }, []);
@@ -151,7 +151,6 @@ export default function App() {
   const handleAuthModeChange = (mode: AuthMode) => {
     setAuthMode(mode);
     setAuthError(null);
-    setAuthSuccess(null);
   };
 
   const authCanSubmit = useMemo(() => {
@@ -200,7 +199,7 @@ export default function App() {
 
     setAuthLoading(true);
     setAuthError(null);
-    setAuthSuccess(null);
+    setAuthNotice(null);
 
     try {
       const session: AuthSession =
@@ -215,41 +214,42 @@ export default function App() {
               password,
             });
       localStorage.setItem(TOKEN_KEY, session.token);
-      setAuthTransitioning(true);
-      setAuthSuccess(authMode === 'register' ? 'Account created. Taking you to your dashboard.' : 'Logged in. Taking you to your dashboard.');
+      setToken(session.token);
+      setSessionUser(session.user);
+      setAuthForm(createInitialAuthForm());
+      setDraft(createInitialDraft());
+      setEditingId(null);
+      setAppLoading(false);
+      setAuthNotice(authMode === 'register' ? 'Account created. Welcome to your dashboard.' : 'Logged in. Welcome back.');
 
-      if (authSuccessTimerRef.current) {
-        window.clearTimeout(authSuccessTimerRef.current);
+      if (authNoticeTimerRef.current) {
+        window.clearTimeout(authNoticeTimerRef.current);
       }
 
-      authSuccessTimerRef.current = window.setTimeout(async () => {
-        try {
-          setToken(session.token);
-          setSessionUser(session.user);
-          setRolls(await listRolls(session.token));
-          setAuthForm(createInitialAuthForm());
-          setDraft(createInitialDraft());
-          setEditingId(null);
-        } finally {
-          setAuthTransitioning(false);
-          setAuthSuccess(null);
-          setAuthLoading(false);
-          authSuccessTimerRef.current = null;
-        }
-      }, 850);
+      authNoticeTimerRef.current = window.setTimeout(() => {
+        setAuthNotice(null);
+        authNoticeTimerRef.current = null;
+      }, 2800);
+
+      try {
+        setRolls(await listRolls(session.token));
+      } catch {
+        setRollError('Signed in, but we could not load your rolls yet.');
+      }
+
+      setAuthLoading(false);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Failed to authenticate.');
       setAuthLoading(false);
-      setAuthTransitioning(false);
     } finally {
       setAppLoading(false);
     }
   };
 
   const handleLogout = () => {
-    if (authSuccessTimerRef.current) {
-      window.clearTimeout(authSuccessTimerRef.current);
-      authSuccessTimerRef.current = null;
+    if (authNoticeTimerRef.current) {
+      window.clearTimeout(authNoticeTimerRef.current);
+      authNoticeTimerRef.current = null;
     }
     clearSession();
     setAuthError(null);
@@ -554,7 +554,6 @@ export default function App() {
                 form={authForm}
                 loading={authLoading}
                 error={authError}
-                successMessage={authSuccess}
                 canSubmit={authCanSubmit}
                 onModeChange={handleAuthModeChange}
                 onFieldChange={handleAuthFieldChange}
@@ -573,6 +572,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <main className="app">
+        {authNotice ? <p className="dashboard-notice">{authNotice}</p> : null}
         <header className="hero panel">
           <div className="hero__copy">
             <p className="eyebrow">Signed in as {sessionUser.name}</p>

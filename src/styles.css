@@ -498,7 +498,7 @@ h1 {
 }
 
 .auth-error,
-.auth-success,
+.dashboard-notice,
 .panel-note--error {
   margin: 0;
   border-radius: var(--radius-md);
@@ -512,10 +512,11 @@ h1 {
   color: #f3d7cf;
 }
 
-.auth-success {
+.dashboard-notice {
   border: 1px solid rgba(111, 138, 103, 0.34);
   background: rgba(111, 138, 103, 0.14);
-  color: #d9e8d5;
+  color: #2c4e2a;
+  margin: 0 0 18px;
 }
 
 .hero__panel-inner {
