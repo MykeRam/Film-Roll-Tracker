@@ -12,6 +12,7 @@ type AuthPanelProps = {
   form: AuthFormState;
   loading: boolean;
   error: string | null;
+  successMessage: string | null;
   canSubmit: boolean;
   onModeChange: (mode: AuthMode) => void;
   onFieldChange: (field: keyof AuthFormState, value: string) => void;
@@ -23,6 +24,7 @@ export function AuthPanel({
   form,
   loading,
   error,
+  successMessage,
   canSubmit,
   onModeChange,
   onFieldChange,
@@ -105,7 +107,13 @@ export function AuthPanel({
           </label>
         ) : null}
 
-        {error ? <p className="auth-error">{error}</p> : <p className="form-hint">Use the same account to keep your rolls, filters, and edits private.</p>}
+        {successMessage ? (
+          <p className="auth-success">{successMessage}</p>
+        ) : error ? (
+          <p className="auth-error">{error}</p>
+        ) : (
+          <p className="form-hint">Use the same account to keep your rolls, filters, and edits private.</p>
+        )}
 
         <div className="form-actions">
           <span className="form-hint">JWT auth keeps access scoped to the signed-in user.</span>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AuthPanel, type AuthFormState, type AuthMode } from './components/AuthPanel';
 import { RollForm } from './components/RollForm';
 import { RollTable } from './components/RollTable';
@@ -73,8 +73,11 @@ export default function App() {
   const [authForm, setAuthForm] = useState<AuthFormState>(createInitialAuthForm);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+  const [authTransitioning, setAuthTransitioning] = useState(false);
   const [rollLoading, setRollLoading] = useState(false);
   const [rollError, setRollError] = useState<string | null>(null);
+  const authSuccessTimerRef = useRef<number | null>(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -83,13 +86,15 @@ export default function App() {
     setRolls([]);
     setDraft(createInitialDraft());
     setEditingId(null);
+    setAuthSuccess(null);
+    setAuthTransitioning(false);
   };
 
   useEffect(() => {
     let active = true;
 
     async function bootstrap() {
-      if (!token) {
+      if (!token || authTransitioning) {
         if (active) {
           setAppLoading(false);
         }
@@ -126,7 +131,15 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [authTransitioning, token]);
+
+  useEffect(() => {
+    return () => {
+      if (authSuccessTimerRef.current) {
+        window.clearTimeout(authSuccessTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleAuthFieldChange = (field: keyof AuthFormState, value: string) => {
     setAuthForm((current) => ({
@@ -138,6 +151,7 @@ export default function App() {
   const handleAuthModeChange = (mode: AuthMode) => {
     setAuthMode(mode);
     setAuthError(null);
+    setAuthSuccess(null);
   };
 
   const authCanSubmit = useMemo(() => {
@@ -186,6 +200,7 @@ export default function App() {
 
     setAuthLoading(true);
     setAuthError(null);
+    setAuthSuccess(null);
 
     try {
       const session: AuthSession =
@@ -200,21 +215,42 @@ export default function App() {
               password,
             });
       localStorage.setItem(TOKEN_KEY, session.token);
-      setToken(session.token);
-      setSessionUser(session.user);
-      setRolls(await listRolls(session.token));
-      setAuthForm(createInitialAuthForm());
-      setDraft(createInitialDraft());
-      setEditingId(null);
+      setAuthTransitioning(true);
+      setAuthSuccess(authMode === 'register' ? 'Account created. Taking you to your dashboard.' : 'Logged in. Taking you to your dashboard.');
+
+      if (authSuccessTimerRef.current) {
+        window.clearTimeout(authSuccessTimerRef.current);
+      }
+
+      authSuccessTimerRef.current = window.setTimeout(async () => {
+        try {
+          setToken(session.token);
+          setSessionUser(session.user);
+          setRolls(await listRolls(session.token));
+          setAuthForm(createInitialAuthForm());
+          setDraft(createInitialDraft());
+          setEditingId(null);
+        } finally {
+          setAuthTransitioning(false);
+          setAuthSuccess(null);
+          setAuthLoading(false);
+          authSuccessTimerRef.current = null;
+        }
+      }, 850);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Failed to authenticate.');
-    } finally {
       setAuthLoading(false);
+      setAuthTransitioning(false);
+    } finally {
       setAppLoading(false);
     }
   };
 
   const handleLogout = () => {
+    if (authSuccessTimerRef.current) {
+      window.clearTimeout(authSuccessTimerRef.current);
+      authSuccessTimerRef.current = null;
+    }
     clearSession();
     setAuthError(null);
     setRollError(null);
@@ -518,6 +554,7 @@ export default function App() {
                 form={authForm}
                 loading={authLoading}
                 error={authError}
+                successMessage={authSuccess}
                 canSubmit={authCanSubmit}
                 onModeChange={handleAuthModeChange}
                 onFieldChange={handleAuthFieldChange}

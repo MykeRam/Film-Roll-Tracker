@@ -498,14 +498,24 @@ h1 {
 }
 
 .auth-error,
+.auth-success,
 .panel-note--error {
   margin: 0;
-  border: 1px solid rgba(190, 125, 97, 0.28);
-  background: rgba(190, 125, 97, 0.12);
-  color: #f3d7cf;
   border-radius: var(--radius-md);
   padding: 12px 14px;
   line-height: 1.5;
+}
+
+.auth-error {
+  border: 1px solid rgba(190, 125, 97, 0.28);
+  background: rgba(190, 125, 97, 0.12);
+  color: #f3d7cf;
+}
+
+.auth-success {
+  border: 1px solid rgba(111, 138, 103, 0.34);
+  background: rgba(111, 138, 103, 0.14);
+  color: #d9e8d5;
 }
 
 .hero__panel-inner {
