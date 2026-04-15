@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AuthPanel, type AuthFormState, type AuthMode } from './components/AuthPanel';
-import { CountUp } from './components/CountUp';
 import { RollForm } from './components/RollForm';
 import { RollTable } from './components/RollTable';
 import { StatCard } from './components/StatCard';
@@ -66,9 +65,6 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [rollLoading, setRollLoading] = useState(false);
   const [rollError, setRollError] = useState<string | null>(null);
-  const [landingDemoVisible, setLandingDemoVisible] = useState(false);
-  const landingDemoRef = useRef<HTMLElement | null>(null);
-  const landingDemoStatsRef = useRef<HTMLDivElement | null>(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -77,7 +73,6 @@ export default function App() {
     setRolls([]);
     setDraft(createInitialDraft());
     setEditingId(null);
-    setLandingDemoVisible(false);
   };
 
   useEffect(() => {
@@ -122,43 +117,6 @@ export default function App() {
       active = false;
     };
   }, [token]);
-
-  useEffect(() => {
-    const element = landingDemoStatsRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    let frame = 0;
-
-    const checkVisibility = () => {
-      const rect = element.getBoundingClientRect();
-      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-      const entersViewport = rect.top < viewportHeight * 0.85 && rect.bottom > 0;
-
-      if (entersViewport) {
-        setLandingDemoVisible(true);
-      }
-    };
-
-    const scheduleCheck = () => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(checkVisibility);
-    };
-
-    scheduleCheck();
-    window.addEventListener('scroll', scheduleCheck, { passive: true });
-    window.addEventListener('resize', scheduleCheck);
-    window.addEventListener('orientationchange', scheduleCheck);
-
-    return () => {
-      window.removeEventListener('scroll', scheduleCheck);
-      window.removeEventListener('resize', scheduleCheck);
-      window.removeEventListener('orientationchange', scheduleCheck);
-      window.cancelAnimationFrame(frame);
-    };
-  }, [sessionUser]);
 
   const handleAuthFieldChange = (field: keyof AuthFormState, value: string) => {
     setAuthForm((current) => ({
@@ -464,7 +422,7 @@ export default function App() {
           </section>
           <section className="landing-split">
             <div className="landing-split__grid app">
-              <aside ref={landingDemoRef} className="panel landing-demo" aria-label="Demo stats">
+              <aside className="panel landing-demo" aria-label="Demo stats">
                 <div className="section-heading">
                   <p className="eyebrow">Demo stats</p>
                   <h2>See what the app can track</h2>
@@ -474,20 +432,8 @@ export default function App() {
                   </p>
                 </div>
 
-                <div ref={landingDemoStatsRef} className="landing-demo__stats">
-                  <StatCard
-                    label="Rolls logged"
-                    value={
-                      <CountUp
-                        className="count-up"
-                        end={24}
-                        suffix=" rolls"
-                        play={landingDemoVisible}
-                      />
-                    }
-                    detail="Example collection for a film shooter"
-                    tone="gold"
-                  />
+                <div className="landing-demo__stats">
+                  <StatCard label="Rolls logged" value="24 rolls" detail="Example collection for a film shooter" tone="gold" />
                   <StatCard
                     label="Most-used camera"
                     value="Nikon FM2"
@@ -502,14 +448,7 @@ export default function App() {
                   />
                   <StatCard
                     label="Development rate"
-                    value={
-                      <CountUp
-                        className="count-up"
-                        end={83}
-                        suffix="%"
-                        play={landingDemoVisible}
-                      />
-                    }
+                    value="83%"
                     detail="Most rolls already past the darkroom"
                     tone="gold"
                   />

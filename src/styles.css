@@ -517,11 +517,6 @@ h1 {
   font-size: 0.95rem;
 }
 
-.count-up {
-  display: inline-flex;
-  align-items: baseline;
-}
-
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
