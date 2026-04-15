@@ -136,8 +136,8 @@ export default function App() {
         }
       },
       {
-        threshold: 0.6,
-        rootMargin: '0px 0px -10% 0px',
+        threshold: 0.12,
+        rootMargin: '0px 0px -18% 0px',
       },
     );
 
