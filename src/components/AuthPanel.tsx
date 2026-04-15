@@ -4,6 +4,7 @@ type AuthFormState = {
   name: string;
   email: string;
   password: string;
+  confirmPassword: string;
 };
 
 type AuthPanelProps = {
@@ -11,12 +12,22 @@ type AuthPanelProps = {
   form: AuthFormState;
   loading: boolean;
   error: string | null;
+  canSubmit: boolean;
   onModeChange: (mode: AuthMode) => void;
   onFieldChange: (field: keyof AuthFormState, value: string) => void;
   onSubmit: () => void;
 };
 
-export function AuthPanel({ mode, form, loading, error, onModeChange, onFieldChange, onSubmit }: AuthPanelProps) {
+export function AuthPanel({
+  mode,
+  form,
+  loading,
+  error,
+  canSubmit,
+  onModeChange,
+  onFieldChange,
+  onSubmit,
+}: AuthPanelProps) {
   return (
     <section className="panel auth-panel">
       <div className="section-heading">
@@ -54,12 +65,22 @@ export function AuthPanel({ mode, form, loading, error, onModeChange, onFieldCha
         {mode === 'register' ? (
           <label className="field">
             <span>Name</span>
-            <input value={form.name} onChange={(event) => onFieldChange('name', event.target.value)} placeholder="Myke Ramirez" />
+            <input
+              value={form.name}
+              onChange={(event) => onFieldChange('name', event.target.value)}
+              autoComplete="name"
+              placeholder="Myke Ramirez"
+            />
           </label>
         ) : null}
         <label className="field">
           <span>Email</span>
-          <input value={form.email} onChange={(event) => onFieldChange('email', event.target.value)} placeholder="you@example.com" />
+          <input
+            value={form.email}
+            onChange={(event) => onFieldChange('email', event.target.value)}
+            autoComplete="email"
+            placeholder="you@example.com"
+          />
         </label>
         <label className="field">
           <span>Password</span>
@@ -67,15 +88,28 @@ export function AuthPanel({ mode, form, loading, error, onModeChange, onFieldCha
             value={form.password}
             onChange={(event) => onFieldChange('password', event.target.value)}
             type="password"
+            autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
             placeholder="At least 8 characters"
           />
         </label>
+        {mode === 'register' ? (
+          <label className="field">
+            <span>Confirm password</span>
+            <input
+              value={form.confirmPassword}
+              onChange={(event) => onFieldChange('confirmPassword', event.target.value)}
+              type="password"
+              autoComplete="new-password"
+              placeholder="Repeat your password"
+            />
+          </label>
+        ) : null}
 
         {error ? <p className="auth-error">{error}</p> : <p className="form-hint">Use the same account to keep your rolls, filters, and edits private.</p>}
 
         <div className="form-actions">
           <span className="form-hint">JWT auth keeps access scoped to the signed-in user.</span>
-          <button className="primary-button" type="submit" disabled={loading}>
+          <button className="primary-button" type="submit" disabled={loading || !canSubmit}>
             {loading ? 'Working...' : mode === 'register' ? 'Create account' : 'Log in'}
           </button>
         </div>

@@ -39,6 +39,7 @@ function createInitialAuthForm(): AuthFormState {
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
   };
 }
 
@@ -134,7 +135,55 @@ export default function App() {
     }));
   };
 
+  const handleAuthModeChange = (mode: AuthMode) => {
+    setAuthMode(mode);
+    setAuthError(null);
+  };
+
+  const authCanSubmit = useMemo(() => {
+    const email = authForm.email.trim();
+    const password = authForm.password;
+    const name = authForm.name.trim();
+
+    if (authMode === 'register') {
+      return Boolean(name) && Boolean(email) && password.length >= 8 && password === authForm.confirmPassword;
+    }
+
+    return Boolean(email) && Boolean(password);
+  }, [authForm.confirmPassword, authForm.email, authForm.name, authForm.password, authMode]);
+
   const handleAuthSubmit = async () => {
+    const email = authForm.email.trim();
+    const password = authForm.password;
+    const name = authForm.name.trim();
+
+    if (authMode === 'register') {
+      if (!name) {
+        setAuthError('Please enter your name.');
+        return;
+      }
+
+      if (!email) {
+        setAuthError('Please enter your email.');
+        return;
+      }
+
+      if (password.length < 8) {
+        setAuthError('Password must be at least 8 characters.');
+        return;
+      }
+
+      if (password !== authForm.confirmPassword) {
+        setAuthError('Passwords do not match.');
+        return;
+      }
+    } else {
+      if (!email || !password) {
+        setAuthError('Please enter your email and password.');
+        return;
+      }
+    }
+
     setAuthLoading(true);
     setAuthError(null);
 
@@ -142,13 +191,13 @@ export default function App() {
       const session: AuthSession =
         authMode === 'register'
           ? await register({
-              name: authForm.name.trim(),
-              email: authForm.email.trim(),
-              password: authForm.password,
+              name,
+              email,
+              password,
             })
           : await login({
-              email: authForm.email.trim(),
-              password: authForm.password,
+              email,
+              password,
             });
       localStorage.setItem(TOKEN_KEY, session.token);
       setToken(session.token);
@@ -464,16 +513,17 @@ export default function App() {
               </aside>
 
               <div className="landing-auth-column" id="signup">
-                <AuthPanel
-                  mode={authMode}
-                  form={authForm}
-                  loading={authLoading}
-                  error={authError}
-                  onModeChange={setAuthMode}
-                  onFieldChange={handleAuthFieldChange}
-                  onSubmit={() => {
-                    void handleAuthSubmit();
-                  }}
+              <AuthPanel
+                mode={authMode}
+                form={authForm}
+                loading={authLoading}
+                error={authError}
+                canSubmit={authCanSubmit}
+                onModeChange={handleAuthModeChange}
+                onFieldChange={handleAuthFieldChange}
+                onSubmit={() => {
+                  void handleAuthSubmit();
+                }}
                 />
               </div>
             </div>
