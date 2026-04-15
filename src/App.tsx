@@ -68,6 +68,7 @@ export default function App() {
   const [rollError, setRollError] = useState<string | null>(null);
   const [landingDemoVisible, setLandingDemoVisible] = useState(false);
   const landingDemoRef = useRef<HTMLElement | null>(null);
+  const landingDemoStatsRef = useRef<HTMLDivElement | null>(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -123,29 +124,39 @@ export default function App() {
   }, [token]);
 
   useEffect(() => {
-    const element = landingDemoRef.current;
+    const element = landingDemoStatsRef.current;
 
     if (!element) {
       return;
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setLandingDemoVisible(true);
-          observer.disconnect();
-        }
-      },
-      {
-        threshold: 0.1,
-        rootMargin: '0px 0px -15% 0px',
-      },
-    );
+    let frame = 0;
 
-    observer.observe(element);
+    const checkVisibility = () => {
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const entersViewport = rect.top < viewportHeight * 0.85 && rect.bottom > 0;
+
+      if (entersViewport) {
+        setLandingDemoVisible(true);
+      }
+    };
+
+    const scheduleCheck = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(checkVisibility);
+    };
+
+    scheduleCheck();
+    window.addEventListener('scroll', scheduleCheck, { passive: true });
+    window.addEventListener('resize', scheduleCheck);
+    window.addEventListener('orientationchange', scheduleCheck);
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('scroll', scheduleCheck);
+      window.removeEventListener('resize', scheduleCheck);
+      window.removeEventListener('orientationchange', scheduleCheck);
+      window.cancelAnimationFrame(frame);
     };
   }, [sessionUser]);
 
@@ -463,7 +474,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <div className="landing-demo__stats">
+                <div ref={landingDemoStatsRef} className="landing-demo__stats">
                   <StatCard
                     label="Rolls logged"
                     value={
