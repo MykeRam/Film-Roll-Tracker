@@ -106,6 +106,10 @@ svg {
   background: #ffffff;
 }
 
+.landing-hero.panel {
+  border-radius: 0;
+}
+
 .landing-hero__image {
   position: absolute;
   inset: 0;
