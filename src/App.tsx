@@ -68,6 +68,7 @@ export default function App() {
   const [rollError, setRollError] = useState<string | null>(null);
   const [landingDemoVisible, setLandingDemoVisible] = useState(false);
   const landingDemoRef = useRef<HTMLElement | null>(null);
+  const landingDemoTriggerRef = useRef<HTMLDivElement | null>(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -123,39 +124,53 @@ export default function App() {
   }, [token]);
 
   useEffect(() => {
-    const element = landingDemoRef.current;
+    const trigger = landingDemoTriggerRef.current;
 
-    if (!element) {
+    if (!trigger) {
       return;
     }
 
-    let frame = 0;
+    const reveal = () => {
+      setLandingDemoVisible(true);
+    };
 
     const checkVisibility = () => {
-      const rect = element.getBoundingClientRect();
+      const rect = trigger.getBoundingClientRect();
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-      const panelHasEnteredViewport = rect.top <= viewportHeight * 0.9 && rect.bottom > 0;
+      const isInView = rect.top <= viewportHeight * 0.75 && rect.bottom >= 0;
 
-      if (panelHasEnteredViewport) {
-        setLandingDemoVisible(true);
+      if (isInView) {
+        reveal();
       }
     };
 
-    const scheduleCheck = () => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(checkVisibility);
-    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          reveal();
+        }
+      },
+      {
+        threshold: 0,
+        rootMargin: '0px 0px -25% 0px',
+      },
+    );
 
-    scheduleCheck();
-    window.addEventListener('scroll', scheduleCheck, { passive: true });
-    window.addEventListener('resize', scheduleCheck);
-    window.addEventListener('orientationchange', scheduleCheck);
+    let frame = window.requestAnimationFrame(checkVisibility);
+    const timeout = window.setTimeout(checkVisibility, 250);
+
+    observer.observe(trigger);
+    window.addEventListener('scroll', checkVisibility, { passive: true });
+    window.addEventListener('resize', checkVisibility);
+    window.addEventListener('orientationchange', checkVisibility);
 
     return () => {
-      window.removeEventListener('scroll', scheduleCheck);
-      window.removeEventListener('resize', scheduleCheck);
-      window.removeEventListener('orientationchange', scheduleCheck);
+      observer.disconnect();
+      window.removeEventListener('scroll', checkVisibility);
+      window.removeEventListener('resize', checkVisibility);
+      window.removeEventListener('orientationchange', checkVisibility);
       window.cancelAnimationFrame(frame);
+      window.clearTimeout(timeout);
     };
   }, [sessionUser]);
 
@@ -463,11 +478,8 @@ export default function App() {
           </section>
           <section className="landing-split">
             <div className="landing-split__grid app">
-              <aside
-                ref={landingDemoRef}
-                className={`panel landing-demo${landingDemoVisible ? ' landing-demo--visible' : ''}`}
-                aria-label="Demo stats"
-              >
+              <aside ref={landingDemoRef} className="panel landing-demo" aria-label="Demo stats">
+                <div ref={landingDemoTriggerRef} className="landing-demo__trigger" aria-hidden="true" />
                 <div className="section-heading">
                   <p className="eyebrow">Demo stats</p>
                   <h2>See what the app can track</h2>
@@ -491,7 +503,7 @@ export default function App() {
                     }
                     detail="Example collection for a film shooter"
                     tone="gold"
-                    animate={false}
+                    animate={landingDemoVisible}
                     delayMs={0}
                     reveal={landingDemoVisible}
                   />
@@ -500,7 +512,7 @@ export default function App() {
                     value="Nikon FM2"
                     detail="Popular body in the demo library"
                     tone="sage"
-                    animate={false}
+                    animate={landingDemoVisible}
                     delayMs={120}
                     reveal={landingDemoVisible}
                   />
@@ -509,7 +521,7 @@ export default function App() {
                     value="Portra 400"
                     detail="Most-used film in the example account"
                     tone="clay"
-                    animate={false}
+                    animate={landingDemoVisible}
                     delayMs={240}
                     reveal={landingDemoVisible}
                   />
@@ -526,7 +538,7 @@ export default function App() {
                     }
                     detail="Most rolls already past the darkroom"
                     tone="gold"
-                    animate={false}
+                    animate={landingDemoVisible}
                     delayMs={360}
                     reveal={landingDemoVisible}
                   />

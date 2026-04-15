@@ -208,6 +208,11 @@ svg {
   padding: 28px;
 }
 
+.landing-demo__trigger {
+  height: 1px;
+  margin-bottom: 4px;
+}
+
 .landing-demo .section-heading {
   max-width: 34rem;
 }
