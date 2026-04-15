@@ -42,6 +42,8 @@ The backend now includes a JWT auth scaffold in `server/`:
 
 The frontend authenticates against the API, loads only the signed-in user’s rolls, and only enables edit/delete actions for rolls owned by that account.
 
+The logged-out landing state uses a full-screen hero image layer driven by the `--hero-image` CSS variable in `src/styles.css`. Swap that variable to your chosen image when you’re ready.
+
 Run the API separately:
 
 ```bash
