@@ -106,4 +106,3 @@ export class PostgresUserStore implements UserStore {
 export function toPublicUserRecord(user: UserRecord): PublicUser {
   return toPublicUser(user);
 }
-

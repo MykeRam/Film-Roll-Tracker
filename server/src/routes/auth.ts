@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { ZodError, z } from 'zod';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { defaultRollSeeds } from '../seed/defaultRolls.js';
+import type { ActivityStore } from '../store/activityStore.js';
 import type { RollStore } from '../store/rollStore.js';
 import { toPublicUserRecord, type UserStore } from '../store/userStore.js';
 
@@ -25,6 +26,7 @@ type CreateAuthRouterParams = {
   jwtSecret: string;
   userStore: UserStore;
   rollStore: RollStore;
+  activityStore: ActivityStore;
 };
 
 function signToken(userId: string, email: string, jwtSecret: string) {
@@ -47,7 +49,11 @@ function handleValidationError(error: unknown) {
   return null;
 }
 
-export function createAuthRouter({ jwtSecret, userStore, rollStore }: CreateAuthRouterParams) {
+function toSeedSummary(title: string) {
+  return `Starter roll "${title}" added to the library.`;
+}
+
+export function createAuthRouter({ jwtSecret, userStore, rollStore, activityStore }: CreateAuthRouterParams) {
   const router = Router();
 
   router.post('/register', async (req, res, next) => {
@@ -75,7 +81,18 @@ export function createAuthRouter({ jwtSecret, userStore, rollStore }: CreateAuth
 
       for (const seed of defaultRollSeeds) {
         try {
-          await rollStore.create(createdUser.id, seed);
+          const createdRoll = await rollStore.create(createdUser.id, seed);
+          await activityStore.create(createdUser.id, createdRoll.id, {
+            eventType: 'roll_seeded',
+            summary: toSeedSummary(seed.title),
+            payload: {
+              rollId: createdRoll.id,
+              title: createdRoll.title,
+              camera: createdRoll.camera,
+              lens: createdRoll.lens,
+              filmStock: createdRoll.filmStock,
+            },
+          });
         } catch (error) {
           throw new Error(`Failed to seed starter roll "${seed.title}".`, { cause: error });
         }

@@ -30,6 +30,27 @@ export type RollRecord = {
   updatedAt: Date;
 };
 
+export type RollUploadRecord = {
+  id: string;
+  rollId: string;
+  userId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+  createdAt: Date;
+};
+
+export type RollActivityRecord = {
+  id: string;
+  rollId: string | null;
+  userId: string;
+  eventType: string;
+  summary: string;
+  payload: Record<string, unknown>;
+  createdAt: Date;
+};
+
 export type RollInput = {
   title: string;
   camera: string;
@@ -39,4 +60,17 @@ export type RollInput = {
   status: RollStatus;
   dateLoaded: string;
   notes: string;
+};
+
+export type UploadInput = {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+};
+
+export type ActivityInput = {
+  eventType: string;
+  summary: string;
+  payload?: Record<string, unknown>;
 };

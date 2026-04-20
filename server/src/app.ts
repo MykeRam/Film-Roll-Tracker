@@ -1,9 +1,12 @@
 import cors from 'cors';
 import express from 'express';
 import { env } from './config.js';
+import { createAnalyticsRouter } from './routes/analytics.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createRollRouter } from './routes/rolls.js';
+import { InMemoryActivityStore, PostgresActivityStore } from './store/activityStore.js';
 import { InMemoryRollStore, PostgresRollStore } from './store/rollStore.js';
+import { InMemoryUploadStore, PostgresUploadStore } from './store/uploadStore.js';
 import { InMemoryUserStore, PostgresUserStore } from './store/userStore.js';
 import type { Pool } from 'pg';
 import { Pool as PgPool } from 'pg';
@@ -13,6 +16,8 @@ function createStores() {
     return {
       userStore: new InMemoryUserStore(),
       rollStore: new InMemoryRollStore(),
+      uploadStore: new InMemoryUploadStore(),
+      activityStore: new InMemoryActivityStore(),
       mode: 'memory' as const,
     };
   }
@@ -24,13 +29,15 @@ function createStores() {
   return {
     userStore: new PostgresUserStore(pool as Pool),
     rollStore: new PostgresRollStore(pool as Pool),
+    uploadStore: new PostgresUploadStore(pool as Pool),
+    activityStore: new PostgresActivityStore(pool as Pool),
     mode: 'postgres' as const,
     pool,
   };
 }
 
 export function createApp() {
-  const { userStore, rollStore, mode } = createStores();
+  const { userStore, rollStore, uploadStore, activityStore, mode } = createStores();
   const app = express();
 
   app.use(
@@ -39,7 +46,7 @@ export function createApp() {
       credentials: true,
     }),
   );
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
 
   app.get('/health', (_req, res) => {
     res.json({
@@ -48,8 +55,12 @@ export function createApp() {
     });
   });
 
-  app.use('/auth', createAuthRouter({ jwtSecret: env.JWT_SECRET, userStore, rollStore }));
-  app.use('/rolls', createRollRouter({ jwtSecret: env.JWT_SECRET, userStore, rollStore }));
+  app.use('/auth', createAuthRouter({ jwtSecret: env.JWT_SECRET, userStore, rollStore, activityStore }));
+  app.use('/rolls', createRollRouter({ jwtSecret: env.JWT_SECRET, userStore, rollStore, uploadStore, activityStore }));
+  app.use(
+    '/analytics',
+    createAnalyticsRouter({ jwtSecret: env.JWT_SECRET, userStore, rollStore, uploadStore, activityStore }),
+  );
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not found' });
