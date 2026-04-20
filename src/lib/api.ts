@@ -1,4 +1,13 @@
-import type { AuthSession, FilmRoll, RollDraft, RollStatus, User } from '../types';
+import type {
+  AnalyticsOverview,
+  AuthSession,
+  FilmRoll,
+  RollActivity,
+  RollDraft,
+  RollStatus,
+  RollUpload,
+  User,
+} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:4000';
 
@@ -62,6 +71,13 @@ export type RollPayload = Omit<RollDraft, 'iso'> & {
   iso: string;
 };
 
+export type RollUploadPayload = {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+};
+
 export async function register(payload: RegisterPayload): Promise<AuthSession> {
   return request<AuthSession>('/auth/register', {
     method: 'POST',
@@ -118,6 +134,37 @@ export async function deleteRoll(token: string, id: string): Promise<void> {
     method: 'DELETE',
     token,
   });
+}
+
+export async function listRollActivity(token: string, id: string): Promise<RollActivity[]> {
+  const response = await request<{ activity: RollActivity[] }>(`/rolls/${id}/activity`, { token });
+  return response.activity;
+}
+
+export async function listRollUploads(token: string, id: string): Promise<RollUpload[]> {
+  const response = await request<{ uploads: RollUpload[] }>(`/rolls/${id}/uploads`, { token });
+  return response.uploads;
+}
+
+export async function createRollUpload(token: string, id: string, payload: RollUploadPayload): Promise<RollUpload> {
+  const response = await request<{ upload: RollUpload }>(`/rolls/${id}/uploads`, {
+    method: 'POST',
+    body: payload,
+    token,
+  });
+
+  return response.upload;
+}
+
+export async function deleteRollUpload(token: string, rollId: string, uploadId: string): Promise<void> {
+  await request<void>(`/rolls/${rollId}/uploads/${uploadId}`, {
+    method: 'DELETE',
+    token,
+  });
+}
+
+export async function getAnalyticsOverview(token: string): Promise<AnalyticsOverview> {
+  return request<AnalyticsOverview>('/analytics/overview', { token });
 }
 
 export function getApiBaseUrl() {

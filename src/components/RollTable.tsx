@@ -3,9 +3,11 @@ import type { FilmRoll, RollStatus } from '../types';
 type RollTableProps = {
   rolls: FilmRoll[];
   currentUserId: string | null;
+  selectedRollId: string | null;
   onEdit: (roll: FilmRoll) => void;
   onStatusChange: (id: string, status: RollStatus) => void;
   onDelete: (id: string) => void;
+  onSelect: (roll: FilmRoll) => void;
 };
 
 const statusLabels: Record<RollStatus, string> = {
@@ -25,7 +27,7 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-export function RollTable({ rolls, currentUserId, onEdit, onStatusChange, onDelete }: RollTableProps) {
+export function RollTable({ rolls, currentUserId, selectedRollId, onEdit, onStatusChange, onDelete, onSelect }: RollTableProps) {
   return (
     <section className="panel table-panel" id="roll-library">
       <div className="section-heading">
@@ -48,7 +50,7 @@ export function RollTable({ rolls, currentUserId, onEdit, onStatusChange, onDele
           </thead>
           <tbody>
             {rolls.map((roll) => (
-              <tr key={roll.id}>
+              <tr key={roll.id} className={roll.id === selectedRollId ? 'table-row--selected' : undefined}>
                 <td>
                   <div className="table-primary">
                     <strong>{roll.title}</strong>
@@ -85,6 +87,9 @@ export function RollTable({ rolls, currentUserId, onEdit, onStatusChange, onDele
                 <td>{formatDate(roll.dateLoaded)}</td>
                 <td>
                   <div className="row-actions">
+                    <button className="ghost-button" type="button" onClick={() => onSelect(roll)}>
+                      History
+                    </button>
                     <button className="secondary-button" type="button" onClick={() => onEdit(roll)} disabled={roll.userId !== currentUserId}>
                       Edit
                     </button>

@@ -1,19 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnalyticsPanel } from './components/AnalyticsPanel';
 import { AuthPanel, type AuthFormState, type AuthMode } from './components/AuthPanel';
 import { RollForm } from './components/RollForm';
+import { RollDetailPanel } from './components/RollDetailPanel';
 import { RollTable } from './components/RollTable';
 import { StatCard } from './components/StatCard';
 import {
+  createRollUpload,
   createRoll,
   deleteRoll as apiDeleteRoll,
+  deleteRollUpload,
+  getAnalyticsOverview,
   getSession,
   isRollOwner,
+  listRollActivity,
+  listRollUploads,
   listRolls,
   login,
   register,
   updateRoll,
 } from './lib/api';
-import type { AuthSession, FilmRoll, RollDraft, RollStatus, User } from './types';
+import type { AnalyticsOverview, AuthSession, FilmRoll, RollActivity, RollDraft, RollStatus, RollUpload, User } from './types';
 
 const TOKEN_KEY = 'film-roll-tracker-token';
 
@@ -129,6 +136,17 @@ export default function App() {
   const [rollLoading, setRollLoading] = useState(false);
   const [rollError, setRollError] = useState<string | null>(null);
   const [rollErrors, setRollErrors] = useState<RollValidationErrors>({});
+  const [selectedRollId, setSelectedRollId] = useState<string | null>(null);
+  const [selectedRollActivity, setSelectedRollActivity] = useState<RollActivity[]>([]);
+  const [selectedRollUploads, setSelectedRollUploads] = useState<RollUpload[]>([]);
+  const [rollDetailLoading, setRollDetailLoading] = useState(false);
+  const [rollDetailError, setRollDetailError] = useState<string | null>(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadPreviewUrl, setUploadPreviewUrl] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const authNoticeTimerRef = useRef<number | null>(null);
 
   const clearSession = () => {
@@ -142,6 +160,16 @@ export default function App() {
     setAuthNotice(null);
     setRollError(null);
     setRollErrors({});
+    setRollDetailError(null);
+    setSelectedRollId(null);
+    setSelectedRollActivity([]);
+    setSelectedRollUploads([]);
+    setUploadError(null);
+    setUploadFile(null);
+    setUploadPreviewUrl(null);
+    setUploadLoading(false);
+    setAnalytics(null);
+    setAnalyticsLoading(false);
   };
 
   useEffect(() => {
@@ -194,6 +222,76 @@ export default function App() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!uploadFile) {
+      setUploadPreviewUrl(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(uploadFile);
+    setUploadPreviewUrl(previewUrl);
+
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [uploadFile]);
+
+  useEffect(() => {
+    if (!sessionUser) {
+      return;
+    }
+
+    if (rolls.length === 0) {
+      setSelectedRollId(null);
+      return;
+    }
+
+    setSelectedRollId((current) => {
+      if (current && rolls.some((roll) => roll.id === current)) {
+        return current;
+      }
+
+      return rolls[0]?.id ?? null;
+    });
+  }, [rolls, sessionUser]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!token || !sessionUser) {
+      setAnalytics(null);
+      setAnalyticsLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    void refreshAnalytics(token, active);
+
+    return () => {
+      active = false;
+    };
+  }, [sessionUser, token]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!token || !selectedRollId || !sessionUser) {
+      setSelectedRollActivity([]);
+      setSelectedRollUploads([]);
+      setRollDetailLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    void refreshRollWorkspace(token, selectedRollId, active);
+
+    return () => {
+      active = false;
+    };
+  }, [selectedRollId, sessionUser, token]);
 
   const handleAuthFieldChange = (field: keyof AuthFormState, value: string) => {
     setAuthForm((current) => ({
@@ -414,6 +512,72 @@ export default function App() {
     return token;
   };
 
+  const refreshAnalytics = async (tokenValue: string, active = true) => {
+    setAnalyticsLoading(true);
+
+    try {
+      const overview = await getAnalyticsOverview(tokenValue);
+
+      if (active) {
+        setAnalytics(overview);
+      }
+    } catch {
+      if (active) {
+        setAnalytics(null);
+      }
+    } finally {
+      if (active) {
+        setAnalyticsLoading(false);
+      }
+    }
+  };
+
+  const refreshRollWorkspace = async (tokenValue: string, rollId: string, active = true) => {
+    setRollDetailLoading(true);
+    setRollDetailError(null);
+
+    try {
+      const [activity, uploads] = await Promise.all([listRollActivity(tokenValue, rollId), listRollUploads(tokenValue, rollId)]);
+
+      if (active) {
+        setSelectedRollActivity(activity);
+        setSelectedRollUploads(uploads);
+      }
+    } catch {
+      if (active) {
+        setSelectedRollActivity([]);
+        setSelectedRollUploads([]);
+        setRollDetailError('Unable to load uploads and activity for this roll.');
+      }
+    } finally {
+      if (active) {
+        setRollDetailLoading(false);
+      }
+    }
+  };
+
+  const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const result = reader.result;
+
+        if (typeof result === 'string') {
+          resolve(result);
+          return;
+        }
+
+        reject(new Error('Unable to read the selected file.'));
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Unable to read the selected file.'));
+      };
+
+      reader.readAsDataURL(file);
+    });
+
   const buildRollPayload = (current: RollDraft) => ({
     title: current.title.trim(),
     camera: current.camera.trim(),
@@ -455,11 +619,16 @@ export default function App() {
 
         const updatedRoll = await updateRoll(currentToken, editingId, payload);
         setRolls((current) => current.map((roll) => (roll.id === editingId ? updatedRoll : roll)));
+        setSelectedRollId(updatedRoll.id);
+        void refreshRollWorkspace(currentToken, updatedRoll.id);
       } else {
         const createdRoll = await createRoll(currentToken, payload);
         setRolls((current) => [createdRoll, ...current]);
+        setSelectedRollId(createdRoll.id);
+        void refreshRollWorkspace(currentToken, createdRoll.id);
       }
 
+      void refreshAnalytics(currentToken);
       resetDraft();
     } catch (error) {
       setRollError(error instanceof Error ? error.message : 'Unable to save this roll.');
@@ -475,6 +644,7 @@ export default function App() {
     }
 
     setEditingId(roll.id);
+    setSelectedRollId(roll.id);
     setDraft({
       title: roll.title,
       camera: roll.camera,
@@ -523,6 +693,9 @@ export default function App() {
       });
 
       setRolls((current) => current.map((roll) => (roll.id === id ? updatedRoll : roll)));
+      setSelectedRollId(updatedRoll.id);
+      void refreshRollWorkspace(currentToken, updatedRoll.id);
+      void refreshAnalytics(currentToken);
     } catch (error) {
       setRollError(error instanceof Error ? error.message : 'Unable to update this roll.');
     }
@@ -546,12 +719,92 @@ export default function App() {
     try {
       await apiDeleteRoll(currentToken, id);
       setRolls((current) => current.filter((roll) => roll.id !== id));
+      void refreshAnalytics(currentToken);
 
       if (editingId === id) {
         resetDraft();
       }
+
+      if (selectedRollId === id) {
+        const remainingRoll = rolls.find((roll) => roll.id !== id) ?? null;
+        setSelectedRollId(remainingRoll?.id ?? null);
+      }
     } catch (error) {
       setRollError(error instanceof Error ? error.message : 'Unable to delete this roll.');
+    }
+  };
+
+  const selectedRoll = useMemo(
+    () => rolls.find((roll) => roll.id === selectedRollId) ?? null,
+    [rolls, selectedRollId],
+  );
+
+  const analyticsSummary = analytics?.summary ?? null;
+
+  const handleSelectRoll = (roll: FilmRoll) => {
+    setSelectedRollId(roll.id);
+    setRollDetailError(null);
+    setUploadError(null);
+    setUploadFile(null);
+    setUploadPreviewUrl(null);
+  };
+
+  const handleUploadFileChange = (file: File | null) => {
+    setUploadFile(file);
+    setUploadError(null);
+  };
+
+  const handleUploadSubmit = async () => {
+    const currentToken = requireToken();
+
+    if (!selectedRoll) {
+      setUploadError('Select a roll before uploading a preview.');
+      return;
+    }
+
+    if (!uploadFile) {
+      setUploadError('Choose a file to upload.');
+      return;
+    }
+
+    setUploadLoading(true);
+    setUploadError(null);
+
+    try {
+      const fileUrl = await readFileAsDataUrl(uploadFile);
+      await createRollUpload(currentToken, selectedRoll.id, {
+        fileName: uploadFile.name,
+        fileType: uploadFile.type || 'application/octet-stream',
+        fileSize: uploadFile.size,
+        fileUrl,
+      });
+
+      setUploadFile(null);
+      setUploadPreviewUrl(null);
+      void refreshRollWorkspace(currentToken, selectedRoll.id);
+      void refreshAnalytics(currentToken);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Unable to upload this preview.');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleDeleteUpload = async (uploadId: string) => {
+    const currentToken = requireToken();
+
+    if (!selectedRoll) {
+      return;
+    }
+
+    setUploadError(null);
+
+    try {
+      await deleteRollUpload(currentToken, selectedRoll.id, uploadId);
+      void refreshRollWorkspace(currentToken, selectedRoll.id);
+      void refreshAnalytics(currentToken);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Unable to delete this upload.');
     }
   };
 
@@ -635,18 +888,18 @@ export default function App() {
               </aside>
 
               <div className="landing-auth-column" id="signup">
-              <AuthPanel
-                mode={authMode}
-                form={authForm}
-                loading={authLoading}
-                error={authError}
-                emailError={authEmailError}
-                canSubmit={authCanSubmit}
-                onModeChange={handleAuthModeChange}
-                onFieldChange={handleAuthFieldChange}
-                onSubmit={() => {
-                  void handleAuthSubmit();
-                }}
+                <AuthPanel
+                  mode={authMode}
+                  form={authForm}
+                  loading={authLoading}
+                  error={authError}
+                  emailError={authEmailError}
+                  canSubmit={authCanSubmit}
+                  onModeChange={handleAuthModeChange}
+                  onFieldChange={handleAuthFieldChange}
+                  onSubmit={() => {
+                    void handleAuthSubmit();
+                  }}
                 />
               </div>
             </div>
@@ -665,8 +918,7 @@ export default function App() {
             <p className="eyebrow">Welcome back, {sessionUser.name}!</p>
             <h1>Film Roll Tracker</h1>
             <p className="hero__lede">
-              A portfolio-ready tracker for film photographers to log rolls, record camera, lens, stock, and date
-              loaded, update development status, and keep editing rights scoped to the signed-in user.
+              A film roll tracker for film photographers to organize and monitor their rolls, including camera, lens, film stock, load date, and development progress.
             </p>
 
             <div className="hero__actions">
@@ -682,7 +934,7 @@ export default function App() {
 
           <aside className="hero__panel">
             <div className="hero__panel-head">
-              <p className="eyebrow">Current snapshot</p>
+              <p className="eyebrow">Overview</p>
               <button className="ghost-button hero__logout-button" type="button" onClick={handleLogout}>
                 Log out
               </button>
@@ -690,16 +942,30 @@ export default function App() {
             <div className="snapshot-grid">
               <StatCard
                 label="Rolls logged"
-                value={formatCount(stats.rollCount, 'roll')}
-                detail={`${stats.loadedRolls + stats.shotRolls} still active`}
+                value={formatCount(analyticsSummary?.totalRolls ?? stats.rollCount, 'roll')}
+                detail={`${analyticsSummary?.openRolls ?? stats.loadedRolls + stats.shotRolls} still active`}
                 tone="gold"
               />
-              <StatCard label="Most-used camera" value={stats.favoriteCamera} detail="Based on your library" tone="sage" />
-              <StatCard label="Favorite stock" value={stats.favoriteFilm} detail="Most frequent film in your account" tone="clay" />
               <StatCard
-                label="Development rate"
-                value={`${stats.developmentRate}%`}
-                detail={`${stats.developedRolls + stats.scannedRolls} rolls past the darkroom`}
+                label="Most-used camera"
+                value={analytics?.topCameras[0]?.label ?? stats.favoriteCamera}
+                detail="Based on your library"
+                tone="sage"
+              />
+              <StatCard
+                label="Uploads added"
+                value={analyticsSummary?.totalUploads ?? 0}
+                detail="Scan previews stored in the database"
+                tone="clay"
+              />
+              <StatCard
+                label="Average age"
+                value={
+                  analyticsSummary?.averageRollAgeDays === null || analyticsSummary?.averageRollAgeDays === undefined
+                    ? 'N/A'
+                    : `${analyticsSummary.averageRollAgeDays} days`
+                }
+                detail="Average time since loading"
                 tone="gold"
               />
             </div>
@@ -719,7 +985,7 @@ export default function App() {
 
             <div className="workflow-bars" aria-label="Workflow status breakdown">
               {statusOrder.map((status) => {
-                const count = stats.statusCounts.get(status) ?? 0;
+                const count = analyticsSummary?.statusCounts[status] ?? stats.statusCounts.get(status) ?? 0;
                 const percent = rolls.length === 0 ? 0 : (count / rolls.length) * 100;
 
                 return (
@@ -797,6 +1063,8 @@ export default function App() {
           <StatCard label="Scanned rolls" value={formatCount(stats.scannedRolls, 'roll')} detail="Ready for sharing or archiving" tone="gold" />
         </section>
 
+        <AnalyticsPanel analytics={analytics} loading={analyticsLoading} />
+
         {rollError ? <p className="panel-note panel-note--error">{rollError}</p> : null}
 
         <RollForm
@@ -815,12 +1083,33 @@ export default function App() {
         <RollTable
           rolls={visibleRolls}
           currentUserId={sessionUser.id}
+          selectedRollId={selectedRollId}
           onEdit={handleEdit}
           onStatusChange={(id, status) => {
             void updateStatus(id, status);
           }}
           onDelete={(id) => {
             void deleteRoll(id);
+          }}
+          onSelect={handleSelectRoll}
+        />
+
+        <RollDetailPanel
+          roll={selectedRoll}
+          activity={selectedRollActivity}
+          uploads={selectedRollUploads}
+          loading={rollDetailLoading}
+          uploadLoading={uploadLoading}
+          error={rollDetailError}
+          uploadError={uploadError}
+          selectedFileName={uploadFile?.name ?? null}
+          selectedFilePreviewUrl={uploadPreviewUrl}
+          onFileChange={handleUploadFileChange}
+          onUpload={() => {
+            void handleUploadSubmit();
+          }}
+          onDeleteUpload={(uploadId) => {
+            void handleDeleteUpload(uploadId);
           }}
         />
 
@@ -829,8 +1118,7 @@ export default function App() {
             <p className="eyebrow">Roadmap</p>
             <h2>Scaffold ready for the next layer</h2>
             <p>
-              The front-end foundation is in place. The next step is wiring this model to a database, then connecting
-              the frontend to uploads, activity history, and deeper analytics.
+              The front-end foundation is now wired to live uploads, activity history, and deeper analytics.
             </p>
           </div>
 

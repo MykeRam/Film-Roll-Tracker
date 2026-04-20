@@ -25,6 +25,49 @@ export interface FilmRoll {
   notes: string;
 }
 
+export interface RollUpload {
+  id: string;
+  rollId: string;
+  userId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileUrl: string;
+  createdAt: string;
+}
+
+export interface RollActivity {
+  id: string;
+  rollId: string | null;
+  userId: string;
+  eventType: string;
+  summary: string;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface AnalyticsCountBucket {
+  label: string;
+  count: number;
+}
+
+export interface AnalyticsOverview {
+  summary: {
+    totalRolls: number;
+    completedRolls: number;
+    openRolls: number;
+    totalUploads: number;
+    totalActivity: number;
+    averageRollAgeDays: number | null;
+    statusCounts: Record<RollStatus, number>;
+  };
+  topCameras: AnalyticsCountBucket[];
+  topFilmStocks: AnalyticsCountBucket[];
+  monthlyRolls: AnalyticsCountBucket[];
+  monthlyUploads: AnalyticsCountBucket[];
+  recentActivity: RollActivity[];
+}
+
 export interface RollDraft {
   title: string;
   camera: string;
