@@ -1,16 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnalyticsPanel } from './components/AnalyticsPanel';
 import { AuthPanel, type AuthFormState, type AuthMode } from './components/AuthPanel';
 import { RollForm } from './components/RollForm';
 import { RollDetailPanel } from './components/RollDetailPanel';
 import { RollTable } from './components/RollTable';
-import { StatCard } from './components/StatCard';
 import {
   createRollUpload,
   createRoll,
   deleteRoll as apiDeleteRoll,
   deleteRollUpload,
-  getAnalyticsOverview,
   getSession,
   isRollOwner,
   listRollActivity,
@@ -20,7 +17,7 @@ import {
   register,
   updateRoll,
 } from './lib/api';
-import type { AnalyticsOverview, AuthSession, FilmRoll, RollActivity, RollDraft, RollStatus, RollUpload, User } from './types';
+import type { AuthSession, FilmRoll, RollActivity, RollDraft, RollStatus, RollUpload, User } from './types';
 
 const TOKEN_KEY = 'film-roll-tracker-token';
 
@@ -102,8 +99,6 @@ function validateRollDraft(draft: RollDraft): RollValidationErrors {
   return errors;
 }
 
-const statusOrder: RollStatus[] = ['loaded', 'shot', 'developed', 'scanned'];
-
 const landingDemoMetrics = [
   { label: 'Loaded rolls', value: '6 loaded', percent: 25, tone: 'gold' },
   { label: 'Developed rolls', value: '16 developed', percent: 67, tone: 'sage' },
@@ -115,6 +110,66 @@ const landingDemoBadges = ['24 rolls logged', '3 camera bodies', '5 film stocks'
 
 function formatCount(value: number, noun: string) {
   return `${value} ${noun}${value === 1 ? '' : 's'}`;
+}
+
+function hashString(value: string) {
+  return [...value].reduce((hash, character) => (hash * 31 + character.charCodeAt(0)) >>> 0, 7);
+}
+
+function svgDataUri(svg: string) {
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function createCameraIconSrc(name: string) {
+  const hue = hashString(name) % 360;
+
+  return svgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160">
+      <g fill="none" stroke="#111827" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M43 63h31l13-19h68l13 19h29c13 0 23 10 23 23v43c0 13-10 23-23 23H43c-13 0-23-10-23-23V86c0-13 10-23 23-23Z" fill="hsl(${hue} 18% 93%)"/>
+        <path d="M83 52h73" />
+        <path d="M42 82h35" />
+        <circle cx="125" cy="106" r="34" fill="#ffffff" />
+        <circle cx="125" cy="106" r="19" fill="hsl(${hue} 24% 82%)" />
+        <path d="M181 86h18" />
+      </g>
+    </svg>
+  `);
+}
+
+function normalizeCameraName(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+const cameraImageMap: Record<string, string> = {
+  canonae1: '/cameras/canon-ae-1-cutout.png',
+  canonaf35ml: '/cameras/canon-af35ml-cutout.png',
+  canonsupersureshot: '/cameras/canon-af35ml-cutout.png',
+  mamiya645: '/cameras/mamiya-645-cutout.png',
+  nikonfm2: '/cameras/nikon-fm2-cutout.png',
+  olympusxa: '/cameras/olympus-xa-cutout.png',
+  pentaxk1000: '/cameras/pentax-k1000-cutout.png',
+};
+
+function getCameraImageSrc(name: string) {
+  return cameraImageMap[normalizeCameraName(name)] ?? createCameraIconSrc(name);
+}
+
+function createFilmStockIconSrc(name: string) {
+  const hue = hashString(name) % 360;
+
+  return svgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 150">
+      <g fill="none" stroke="#111827" stroke-width="6" stroke-linejoin="round">
+        <path d="M31 37h128v76H31z" fill="hsl(${hue} 34% 91%)"/>
+        <path d="M31 57h128" />
+        <path d="M31 93h128" />
+        <path d="M49 37v76M141 37v76" />
+      </g>
+      <rect x="61" y="63" width="68" height="24" rx="5" fill="hsl(${hue} 48% 70%)" />
+      <path d="M71 76h48" stroke="#111827" stroke-width="5" stroke-linecap="round" />
+    </svg>
+  `);
 }
 
 export default function App() {
@@ -145,8 +200,7 @@ export default function App() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadPreviewUrl, setUploadPreviewUrl] = useState<string | null>(null);
-  const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
   const authNoticeTimerRef = useRef<number | null>(null);
 
   const clearSession = () => {
@@ -168,8 +222,7 @@ export default function App() {
     setUploadFile(null);
     setUploadPreviewUrl(null);
     setUploadLoading(false);
-    setAnalytics(null);
-    setAnalyticsLoading(false);
+    setSelectedCamera(null);
   };
 
   useEffect(() => {
@@ -255,24 +308,6 @@ export default function App() {
       return rolls[0]?.id ?? null;
     });
   }, [rolls, sessionUser]);
-
-  useEffect(() => {
-    let active = true;
-
-    if (!token || !sessionUser) {
-      setAnalytics(null);
-      setAnalyticsLoading(false);
-      return () => {
-        active = false;
-      };
-    }
-
-    void refreshAnalytics(token, active);
-
-    return () => {
-      active = false;
-    };
-  }, [sessionUser, token]);
 
   useEffect(() => {
     let active = true;
@@ -428,8 +463,44 @@ export default function App() {
     setAuthMode('login');
   };
 
-  const cameraOptions = useMemo(() => [...new Set(rolls.map((roll) => roll.camera))].sort(), [rolls]);
-  const stockOptions = useMemo(() => [...new Set(rolls.map((roll) => roll.filmStock))].sort(), [rolls]);
+  const cameraGrid = useMemo(() => {
+    const grouped = new Map<
+      string,
+      {
+        camera: string;
+        rolls: FilmRoll[];
+        filmStocks: Array<{ name: string; count: number }>;
+      }
+    >();
+
+    for (const roll of rolls) {
+      const existing = grouped.get(roll.camera) ?? {
+        camera: roll.camera,
+        rolls: [],
+        filmStocks: [],
+      };
+
+      existing.rolls.push(roll);
+      grouped.set(roll.camera, existing);
+    }
+
+    return [...grouped.values()]
+      .map((cameraItem) => {
+        const stockCounts = new Map<string, number>();
+
+        for (const roll of cameraItem.rolls) {
+          stockCounts.set(roll.filmStock, (stockCounts.get(roll.filmStock) ?? 0) + 1);
+        }
+
+        return {
+          ...cameraItem,
+          filmStocks: [...stockCounts.entries()]
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        };
+      })
+      .sort((a, b) => a.camera.localeCompare(b.camera));
+  }, [rolls]);
 
   const visibleRolls = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -445,40 +516,6 @@ export default function App() {
       return matchesStatus && matchesCamera && matchesStock && matchesQuery;
     });
   }, [cameraFilter, query, rolls, stockFilter, statusFilter]);
-
-  const stats = useMemo(() => {
-    const rollCount = rolls.length;
-    const loadedRolls = rolls.filter((roll) => roll.status === 'loaded').length;
-    const shotRolls = rolls.filter((roll) => roll.status === 'shot').length;
-    const developedRolls = rolls.filter((roll) => roll.status === 'developed').length;
-    const scannedRolls = rolls.filter((roll) => roll.status === 'scanned').length;
-
-    const cameraCounts = new Map<string, number>();
-    const filmCounts = new Map<string, number>();
-    const statusCounts = new Map<RollStatus, number>();
-
-    for (const roll of rolls) {
-      cameraCounts.set(roll.camera, (cameraCounts.get(roll.camera) ?? 0) + 1);
-      filmCounts.set(roll.filmStock, (filmCounts.get(roll.filmStock) ?? 0) + 1);
-      statusCounts.set(roll.status, (statusCounts.get(roll.status) ?? 0) + 1);
-    }
-
-    const favoriteCamera = [...cameraCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'No camera yet';
-    const favoriteFilm = [...filmCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'No film yet';
-    const developmentRate = rollCount === 0 ? 0 : Math.round(((developedRolls + scannedRolls) / rollCount) * 100);
-
-    return {
-      rollCount,
-      loadedRolls,
-      shotRolls,
-      developedRolls,
-      scannedRolls,
-      favoriteCamera,
-      favoriteFilm,
-      developmentRate,
-      statusCounts,
-    };
-  }, [rolls]);
 
   const handleFieldChange = (field: keyof RollDraft, value: string) => {
     setDraft((current) => ({
@@ -510,26 +547,6 @@ export default function App() {
     }
 
     return token;
-  };
-
-  const refreshAnalytics = async (tokenValue: string, active = true) => {
-    setAnalyticsLoading(true);
-
-    try {
-      const overview = await getAnalyticsOverview(tokenValue);
-
-      if (active) {
-        setAnalytics(overview);
-      }
-    } catch {
-      if (active) {
-        setAnalytics(null);
-      }
-    } finally {
-      if (active) {
-        setAnalyticsLoading(false);
-      }
-    }
   };
 
   const refreshRollWorkspace = async (tokenValue: string, rollId: string, active = true) => {
@@ -628,7 +645,6 @@ export default function App() {
         void refreshRollWorkspace(currentToken, createdRoll.id);
       }
 
-      void refreshAnalytics(currentToken);
       resetDraft();
     } catch (error) {
       setRollError(error instanceof Error ? error.message : 'Unable to save this roll.');
@@ -695,7 +711,6 @@ export default function App() {
       setRolls((current) => current.map((roll) => (roll.id === id ? updatedRoll : roll)));
       setSelectedRollId(updatedRoll.id);
       void refreshRollWorkspace(currentToken, updatedRoll.id);
-      void refreshAnalytics(currentToken);
     } catch (error) {
       setRollError(error instanceof Error ? error.message : 'Unable to update this roll.');
     }
@@ -719,8 +734,6 @@ export default function App() {
     try {
       await apiDeleteRoll(currentToken, id);
       setRolls((current) => current.filter((roll) => roll.id !== id));
-      void refreshAnalytics(currentToken);
-
       if (editingId === id) {
         resetDraft();
       }
@@ -738,8 +751,6 @@ export default function App() {
     () => rolls.find((roll) => roll.id === selectedRollId) ?? null,
     [rolls, selectedRollId],
   );
-
-  const analyticsSummary = analytics?.summary ?? null;
 
   const handleSelectRoll = (roll: FilmRoll) => {
     setSelectedRollId(roll.id);
@@ -782,7 +793,6 @@ export default function App() {
       setUploadFile(null);
       setUploadPreviewUrl(null);
       void refreshRollWorkspace(currentToken, selectedRoll.id);
-      void refreshAnalytics(currentToken);
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Unable to upload this preview.');
     } finally {
@@ -802,7 +812,6 @@ export default function App() {
     try {
       await deleteRollUpload(currentToken, selectedRoll.id, uploadId);
       void refreshRollWorkspace(currentToken, selectedRoll.id);
-      void refreshAnalytics(currentToken);
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Unable to delete this upload.');
     }
@@ -918,7 +927,7 @@ export default function App() {
             <p className="eyebrow">Welcome back, {sessionUser.name}!</p>
             <h1>Film Roll Tracker</h1>
             <p className="hero__lede">
-              A film roll tracker for film photographers to organize and monitor their rolls, including camera, lens, film stock, load date, and development progress.
+              A quiet workspace for your cameras, film stocks, and roll history.
             </p>
 
             <div className="hero__actions">
@@ -928,142 +937,91 @@ export default function App() {
               <a className="secondary-button" href="#roll-library">
                 View library
               </a>
-            </div>
-
-          </div>
-
-          <aside className="hero__panel">
-            <div className="hero__panel-head">
-              <p className="eyebrow">Overview</p>
-              <button className="ghost-button hero__logout-button" type="button" onClick={handleLogout}>
+              <button className="ghost-button" type="button" onClick={handleLogout}>
                 Log out
               </button>
             </div>
-            <div className="snapshot-grid">
-              <StatCard
-                label="Rolls logged"
-                value={formatCount(analyticsSummary?.totalRolls ?? stats.rollCount, 'roll')}
-                detail={`${analyticsSummary?.openRolls ?? stats.loadedRolls + stats.shotRolls} still active`}
-                tone="gold"
-              />
-              <StatCard
-                label="Most-used camera"
-                value={analytics?.topCameras[0]?.label ?? stats.favoriteCamera}
-                detail="Based on your library"
-                tone="sage"
-              />
-              <StatCard
-                label="Uploads added"
-                value={analyticsSummary?.totalUploads ?? 0}
-                detail="Scan previews stored in the database"
-                tone="clay"
-              />
-              <StatCard
-                label="Average age"
-                value={
-                  analyticsSummary?.averageRollAgeDays === null || analyticsSummary?.averageRollAgeDays === undefined
-                    ? 'N/A'
-                    : `${analyticsSummary.averageRollAgeDays} days`
-                }
-                detail="Average time since loading"
-                tone="gold"
-              />
-            </div>
-          </aside>
+          </div>
         </header>
 
-        <section className="dashboard-grid">
-          <article className="panel insight-panel">
-            <div className="section-heading">
-              <p className="eyebrow">Workflow</p>
-              <h2>Build a roll pipeline that feels real</h2>
-              <p>
-                The app tracks a roll from loading through scanning, which makes it easy to show product thinking and a
-                believable data model in your portfolio.
-              </p>
-            </div>
+        <section className="camera-shelf" aria-label="Your cameras and film stocks">
+          {cameraGrid.length > 0 ? (
+            cameraGrid.map((cameraItem) => {
+              const isExpanded = selectedCamera === cameraItem.camera;
 
-            <div className="workflow-bars" aria-label="Workflow status breakdown">
-              {statusOrder.map((status) => {
-                const count = analyticsSummary?.statusCounts[status] ?? stats.statusCounts.get(status) ?? 0;
-                const percent = rolls.length === 0 ? 0 : (count / rolls.length) * 100;
+              return (
+                <article className={`camera-card${isExpanded ? ' camera-card--expanded' : ''}`} key={cameraItem.camera}>
+                  <button
+                    className="camera-card__button"
+                    type="button"
+                    aria-expanded={isExpanded}
+                    onClick={() => {
+                      setSelectedCamera((current) => (current === cameraItem.camera ? null : cameraItem.camera));
+                      setCameraFilter(cameraItem.camera);
+                      setStockFilter('all');
+                      setQuery('');
+                      setStatusFilter('all');
+                    }}
+                  >
+                    <img className="camera-card__image" src={getCameraImageSrc(cameraItem.camera)} alt="" aria-hidden="true" />
+                    <span className="camera-card__name">{cameraItem.camera}</span>
+                    <span className="camera-card__meta">{formatCount(cameraItem.rolls.length, 'roll')}</span>
+                  </button>
 
-                return (
-                  <div className="workflow-row" key={status}>
-                    <div className="workflow-row__meta">
-                      <span>{status}</span>
-                      <strong>{count}</strong>
+                  {isExpanded ? (
+                    <div className="film-stock-grid" aria-label={`${cameraItem.camera} film stocks`}>
+                      {cameraItem.filmStocks.map((filmStock) => (
+                        <button
+                          className="film-stock-card"
+                          key={filmStock.name}
+                          type="button"
+                          onClick={() => {
+                            setCameraFilter(cameraItem.camera);
+                            setStockFilter(filmStock.name);
+                            setQuery('');
+                            setStatusFilter('all');
+                            document.getElementById('roll-library')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }}
+                        >
+                          <img className="film-stock-card__image" src={createFilmStockIconSrc(filmStock.name)} alt="" aria-hidden="true" />
+                          <span>{filmStock.name}</span>
+                          <small>{formatCount(filmStock.count, 'roll')}</small>
+                        </button>
+                      ))}
                     </div>
-                    <div className="workflow-track">
-                      <span style={{ width: `${percent}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="insight-callout">
-              <strong>{formatCount(stats.loadedRolls + stats.shotRolls, 'active roll')}</strong>
-              <span>{formatCount(stats.scannedRolls, 'scanned roll')} already archived in your account</span>
-            </div>
-          </article>
-
-          <article className="panel filters-panel">
-            <div className="section-heading">
-              <p className="eyebrow">Search</p>
-              <h2>Find rolls quickly</h2>
-            </div>
-
-            <label className="field">
-              <span>Search log</span>
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Camera, lens, film stock, notes..." />
-            </label>
-            <label className="field">
-              <span>Status filter</span>
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as RollStatus | 'all')}>
-                <option value="all">All rolls</option>
-                <option value="loaded">Loaded</option>
-                <option value="shot">Shot</option>
-                <option value="developed">Developed</option>
-                <option value="scanned">Scanned</option>
-              </select>
-            </label>
-            <label className="field">
-              <span>Camera filter</span>
-              <select value={cameraFilter} onChange={(event) => setCameraFilter(event.target.value)}>
-                <option value="all">All cameras</option>
-                {cameraOptions.map((camera) => (
-                  <option key={camera} value={camera}>
-                    {camera}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              <span>Film stock filter</span>
-              <select value={stockFilter} onChange={(event) => setStockFilter(event.target.value)}>
-                <option value="all">All stocks</option>
-                {stockOptions.map((stock) => (
-                  <option key={stock} value={stock}>
-                    {stock}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p className="panel-note">
-              {visibleRolls.length} of {rolls.length} rolls match the current filters.
-            </p>
-          </article>
+                  ) : null}
+                </article>
+              );
+            })
+          ) : (
+            <article className="camera-shelf__empty">
+              <p className="eyebrow">No cameras yet</p>
+              <h2>Add your first roll to start your camera grid.</h2>
+            </article>
+          )}
         </section>
 
-        <section className="stats-grid" aria-label="Dashboard summary">
-          <StatCard label="Loaded rolls" value={formatCount(stats.loadedRolls, 'roll')} detail="Still waiting to be shot" tone="gold" />
-          <StatCard label="Shot rolls" value={formatCount(stats.shotRolls, 'roll')} detail="Finished shooting, not yet developed" tone="sage" />
-          <StatCard label="Developed rolls" value={formatCount(stats.developedRolls, 'roll')} detail="Processed in the darkroom" tone="clay" />
-          <StatCard label="Scanned rolls" value={formatCount(stats.scannedRolls, 'roll')} detail="Ready for sharing or archiving" tone="gold" />
-        </section>
-
-        <AnalyticsPanel analytics={analytics} loading={analyticsLoading} />
+        {cameraFilter !== 'all' || stockFilter !== 'all' || statusFilter !== 'all' || query ? (
+          <div className="library-filter-note">
+            <span>
+              Showing {visibleRolls.length} of {rolls.length} rolls
+              {cameraFilter !== 'all' ? ` for ${cameraFilter}` : ''}
+              {stockFilter !== 'all' ? ` with ${stockFilter}` : ''}.
+            </span>
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={() => {
+                setCameraFilter('all');
+                setStockFilter('all');
+                setStatusFilter('all');
+                setQuery('');
+              }}
+            >
+              Show all
+            </button>
+          </div>
+        ) : null}
 
         {rollError ? <p className="panel-note panel-note--error">{rollError}</p> : null}
 
@@ -1112,31 +1070,6 @@ export default function App() {
             void handleDeleteUpload(uploadId);
           }}
         />
-
-        <section className="panel roadmap-panel">
-          <div className="section-heading">
-            <p className="eyebrow">Roadmap</p>
-            <h2>Scaffold ready for the next layer</h2>
-            <p>
-              The front-end foundation is now wired to live uploads, activity history, and deeper analytics.
-            </p>
-          </div>
-
-          <div className="roadmap-list">
-            <div>
-              <span>Data model</span>
-              <strong>Rolls, cameras, lenses, film stocks, and status history</strong>
-            </div>
-            <div>
-              <span>Insights</span>
-              <strong>Most-used camera, favorite stock, and progress trends</strong>
-            </div>
-            <div>
-              <span>Full-stack path</span>
-              <strong>REST API, JWT auth, persistence, and user profiles</strong>
-            </div>
-          </div>
-        </section>
       </main>
     </div>
   );

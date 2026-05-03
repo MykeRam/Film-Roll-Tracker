@@ -315,7 +315,7 @@ svg {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   padding: 32px;
   overflow: hidden;
@@ -594,6 +594,140 @@ h1 {
   grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
   gap: 18px;
   margin-top: 18px;
+}
+
+.camera-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.camera-card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.76);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.camera-card--expanded {
+  border-color: rgba(17, 24, 39, 0.22);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+}
+
+.camera-card__button,
+.film-stock-card {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.camera-card__button {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 230px;
+  padding: 22px 18px;
+}
+
+.camera-card__button:hover {
+  transform: translateY(-2px);
+}
+
+.camera-card__image {
+  width: min(186px, 88%);
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 18px rgba(15, 23, 42, 0.12));
+}
+
+.camera-card__name {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.camera-card__meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.film-stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 12px;
+  padding: 0 16px 18px;
+}
+
+.film-stock-card {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 154px;
+  border: 1px solid var(--line);
+  padding: 14px 10px;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.film-stock-card:hover {
+  border-color: var(--line-strong);
+  background: rgba(15, 23, 42, 0.025);
+  transform: translateY(-1px);
+}
+
+.film-stock-card__image {
+  width: 108px;
+  aspect-ratio: 19 / 15;
+  object-fit: contain;
+}
+
+.film-stock-card span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.film-stock-card small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.camera-shelf__empty {
+  grid-column: 1 / -1;
+  border: 1px solid var(--line);
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.camera-shelf__empty h2 {
+  margin-top: 10px;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+}
+
+.library-filter-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  color: var(--muted-strong);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .section-heading {
