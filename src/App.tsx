@@ -141,18 +141,37 @@ function normalizeCameraName(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-const cameraImageMap: Record<string, string> = {
-  canonae1: '/cameras/canon-ae-1-cutout.png',
-  canonaf35ml: '/cameras/canon-af35ml-cutout.png',
-  canonsupersureshot: '/cameras/canon-af35ml-cutout.png',
-  mamiya645: '/cameras/mamiya-645-cutout.png',
-  nikonfm2: '/cameras/nikon-fm2-cutout.png',
-  olympusxa: '/cameras/olympus-xa-cutout.png',
-  pentaxk1000: '/cameras/pentax-k1000-cutout.png',
-};
+const cameraOptions = [
+  { name: 'Canon AE-1', imageSrc: '/cameras/canon-ae-1-cutout.png' },
+  { name: 'Canon AF35ML', imageSrc: '/cameras/canon-af35ml-cutout.png' },
+  { name: 'Canon Super Sure Shot', imageSrc: '/cameras/canon-af35ml-cutout.png' },
+  { name: 'Mamiya 645', imageSrc: '/cameras/mamiya-645-cutout.png' },
+  { name: 'Nikon FM2', imageSrc: '/cameras/nikon-fm2-cutout.png' },
+  { name: 'Olympus XA', imageSrc: '/cameras/olympus-xa-cutout.png' },
+  { name: 'Pentax K1000', imageSrc: '/cameras/pentax-k1000-cutout.png' },
+] as const;
+
+const cameraImageMap: Record<string, string> = Object.fromEntries(
+  cameraOptions.map((camera) => [normalizeCameraName(camera.name), camera.imageSrc]),
+);
 
 function getCameraImageSrc(name: string) {
   return cameraImageMap[normalizeCameraName(name)] ?? createCameraIconSrc(name);
+}
+
+function getCameraMatch(name: string) {
+  const normalizedName = normalizeCameraName(name);
+
+  if (!normalizedName) {
+    return null;
+  }
+
+  return (
+    cameraOptions.find((camera) => normalizeCameraName(camera.name) === normalizedName) ??
+    cameraOptions.find((camera) => normalizeCameraName(camera.name).startsWith(normalizedName)) ??
+    cameraOptions.find((camera) => normalizeCameraName(camera.name).includes(normalizedName)) ??
+    null
+  );
 }
 
 function createFilmStockIconSrc(name: string) {
@@ -516,6 +535,10 @@ export default function App() {
       return matchesStatus && matchesCamera && matchesStock && matchesQuery;
     });
   }, [cameraFilter, query, rolls, stockFilter, statusFilter]);
+
+  const selectedCameraMatch = getCameraMatch(draft.camera);
+  const cameraPreviewSrc = selectedCameraMatch?.imageSrc ?? (draft.camera.trim() ? getCameraImageSrc(draft.camera) : null);
+  const cameraPreviewLabel = selectedCameraMatch?.name ?? draft.camera.trim();
 
   const handleFieldChange = (field: keyof RollDraft, value: string) => {
     setDraft((current) => ({
@@ -923,6 +946,9 @@ export default function App() {
       <main className="app">
         {authNotice ? <p className="dashboard-notice">{authNotice}</p> : null}
         <header className="hero panel">
+          <button className="ghost-button hero__logout" type="button" onClick={handleLogout}>
+            Log out
+          </button>
           <div className="hero__copy">
             <p className="eyebrow">Welcome back, {sessionUser.name}!</p>
             <h1>Film Roll Tracker</h1>
@@ -935,13 +961,11 @@ export default function App() {
               <a className="secondary-button" href="#roll-library">
                 View library
               </a>
-              <button className="ghost-button" type="button" onClick={handleLogout}>
-                Log out
-              </button>
             </div>
           </div>
         </header>
 
+        {/*
         <section className="camera-shelf" aria-label="Your cameras and film stocks">
           {cameraGrid.length > 0 ? (
             cameraGrid.map((cameraItem) => {
@@ -998,6 +1022,7 @@ export default function App() {
             </article>
           )}
         </section>
+        */}
 
         {cameraFilter !== 'all' || stockFilter !== 'all' || statusFilter !== 'all' || query ? (
           <div className="library-filter-note">
@@ -1028,6 +1053,9 @@ export default function App() {
           mode={editingId ? 'edit' : 'create'}
           loading={rollLoading}
           errors={rollErrors}
+          cameraOptions={cameraOptions}
+          cameraPreviewSrc={cameraPreviewSrc}
+          cameraPreviewLabel={cameraPreviewLabel}
           onFieldChange={handleFieldChange}
           onStatusChange={(value) => handleFieldChange('status', value)}
           onSubmit={() => {

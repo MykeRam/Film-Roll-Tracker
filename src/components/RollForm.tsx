@@ -5,6 +5,9 @@ type RollFormProps = {
   mode: 'create' | 'edit';
   loading: boolean;
   errors: Partial<Record<keyof RollDraft, string>>;
+  cameraOptions: ReadonlyArray<{ name: string; imageSrc: string }>;
+  cameraPreviewSrc: string | null;
+  cameraPreviewLabel: string;
   onFieldChange: (field: keyof RollDraft, value: string) => void;
   onStatusChange: (value: RollStatus) => void;
   onSubmit: () => void;
@@ -18,7 +21,19 @@ const statuses: { value: RollStatus; label: string }[] = [
   { value: 'scanned', label: 'Scanned' },
 ];
 
-export function RollForm({ draft, mode, loading, errors, onFieldChange, onStatusChange, onSubmit, onCancel }: RollFormProps) {
+export function RollForm({
+  draft,
+  mode,
+  loading,
+  errors,
+  cameraOptions,
+  cameraPreviewSrc,
+  cameraPreviewLabel,
+  onFieldChange,
+  onStatusChange,
+  onSubmit,
+  onCancel,
+}: RollFormProps) {
   return (
     <form
       className="panel form-panel"
@@ -28,10 +43,21 @@ export function RollForm({ draft, mode, loading, errors, onFieldChange, onStatus
         onSubmit();
       }}
     >
-      <div className="section-heading">
-        <p className="eyebrow">Quick add</p>
-        <h2>{mode === 'edit' ? 'Edit roll entry' : 'Log a new roll'}</h2>
-        <p>Capture the roll, then update the status as it moves from loaded to scanned. Fields marked * are required.</p>
+      <div className="form-panel__intro">
+        <div className="section-heading">
+          <p className="eyebrow">Quick add</p>
+          <h2>{mode === 'edit' ? 'Edit roll entry' : 'Log a new roll'}</h2>
+          <p>Capture the roll, then update the status as it moves from loaded to scanned. Fields marked * are required.</p>
+        </div>
+
+        <div className="camera-preview" aria-live="polite">
+          {cameraPreviewSrc ? (
+            <>
+              <img src={cameraPreviewSrc} alt={cameraPreviewLabel ? `${cameraPreviewLabel} camera` : 'Selected camera'} />
+              {cameraPreviewLabel ? <span>{cameraPreviewLabel}</span> : null}
+            </>
+          ) : null}
+        </div>
       </div>
 
       <div className="form-grid">
@@ -46,7 +72,17 @@ export function RollForm({ draft, mode, loading, errors, onFieldChange, onStatus
         </label>
         <label className="field">
           <span>Camera *</span>
-          <input value={draft.camera} onChange={(event) => onFieldChange('camera', event.target.value)} placeholder="Nikon FM2" />
+          <input
+            value={draft.camera}
+            onChange={(event) => onFieldChange('camera', event.target.value)}
+            placeholder="Nikon FM2"
+            list="camera-options"
+          />
+          <datalist id="camera-options">
+            {cameraOptions.map((camera) => (
+              <option key={camera.name} value={camera.name} />
+            ))}
+          </datalist>
           {errors.camera ? <span className="field-error">{errors.camera}</span> : null}
         </label>
         <label className="field">
