@@ -329,8 +329,10 @@ svg {
 .hero__copy {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 18px;
   justify-content: center;
+  text-align: center;
 }
 
 .eyebrow {

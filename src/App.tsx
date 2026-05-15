@@ -926,9 +926,7 @@ export default function App() {
           <div className="hero__copy">
             <p className="eyebrow">Welcome back, {sessionUser.name}!</p>
             <h1>Film Roll Tracker</h1>
-            <p className="hero__lede">
-              A quiet workspace for your cameras, film stocks, and roll history.
-            </p>
+            <p className="hero__lede">Follow the life cycle of each roll, from loaded, shots remaining, developed, then scanned.</p>
 
             <div className="hero__actions">
               <a className="primary-button" href="#roll-form">
