@@ -8,6 +8,9 @@ type RollFormProps = {
   cameraOptions: ReadonlyArray<{ name: string; imageSrc: string }>;
   cameraPreviewSrc: string | null;
   cameraPreviewLabel: string;
+  filmStockOptions: ReadonlyArray<{ name: string; imageSrc?: string }>;
+  filmStockPreviewSrc: string | null;
+  filmStockPreviewLabel: string;
   onFieldChange: (field: keyof RollDraft, value: string) => void;
   onStatusChange: (value: RollStatus) => void;
   onSubmit: () => void;
@@ -29,6 +32,9 @@ export function RollForm({
   cameraOptions,
   cameraPreviewSrc,
   cameraPreviewLabel,
+  filmStockOptions,
+  filmStockPreviewSrc,
+  filmStockPreviewLabel,
   onFieldChange,
   onStatusChange,
   onSubmit,
@@ -50,13 +56,28 @@ export function RollForm({
           <p>Capture the roll, then update the status as it moves from loaded to scanned. Fields marked * are required.</p>
         </div>
 
-        <div className="camera-preview" aria-live="polite">
-          {cameraPreviewSrc ? (
-            <>
-              <img src={cameraPreviewSrc} alt={cameraPreviewLabel ? `${cameraPreviewLabel} camera` : 'Selected camera'} />
-              {cameraPreviewLabel ? <span>{cameraPreviewLabel}</span> : null}
-            </>
-          ) : null}
+        <div className="stock-preview-row" aria-live="polite">
+          <div className="stock-preview">
+            {cameraPreviewSrc ? (
+              <>
+                <img className="stock-preview__camera" src={cameraPreviewSrc} alt={cameraPreviewLabel ? `${cameraPreviewLabel} camera` : 'Selected camera'} />
+                {cameraPreviewLabel ? <span>{cameraPreviewLabel}</span> : null}
+              </>
+            ) : null}
+          </div>
+
+          <div className="stock-preview">
+            {filmStockPreviewSrc ? (
+              <>
+                <img
+                  className="stock-preview__film"
+                  src={filmStockPreviewSrc}
+                  alt={filmStockPreviewLabel ? `${filmStockPreviewLabel} film stock` : 'Selected film stock'}
+                />
+                {filmStockPreviewLabel ? <span>{filmStockPreviewLabel}</span> : null}
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -96,7 +117,13 @@ export function RollForm({
             value={draft.filmStock}
             onChange={(event) => onFieldChange('filmStock', event.target.value)}
             placeholder="Portra 400"
+            list="film-stock-options"
           />
+          <datalist id="film-stock-options">
+            {filmStockOptions.map((filmStock) => (
+              <option key={filmStock.name} value={filmStock.name} />
+            ))}
+          </datalist>
           {errors.filmStock ? <span className="field-error">{errors.filmStock}</span> : null}
         </label>
         <label className="field">

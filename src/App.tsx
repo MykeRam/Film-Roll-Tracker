@@ -174,6 +174,10 @@ function getCameraMatch(name: string) {
   );
 }
 
+function normalizeFilmStockName(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 function createFilmStockIconSrc(name: string) {
   const hue = hashString(name) % 360;
 
@@ -189,6 +193,37 @@ function createFilmStockIconSrc(name: string) {
       <path d="M71 76h48" stroke="#111827" stroke-width="5" stroke-linecap="round" />
     </svg>
   `);
+}
+
+const filmStockOptions: ReadonlyArray<{ name: string; imageSrc?: string }> = [
+  { name: 'Cinestill 800T' },
+  { name: 'Fujifilm 400' },
+  { name: 'Ilford Delta 3200' },
+  { name: 'Ilford HP5 Plus', imageSrc: '/film-stocks/ilford-hp5-plus-cutout.png' },
+  { name: 'Ilford XP2 Super' },
+  { name: 'Kodak ColorPlus 200' },
+  { name: 'Kodak Ektar 100', imageSrc: '/film-stocks/kodak-ektar-100-cutout.png' },
+  { name: 'Kodak Gold 200', imageSrc: '/film-stocks/kodak-gold-200-cutout.png' },
+  { name: 'Kodak Portra 160' },
+  { name: 'Kodak Portra 400', imageSrc: '/film-stocks/kodak-portra-400-cutout.png' },
+  { name: 'Kodak Portra 800' },
+  { name: 'Kodak Tri-X 400' },
+  { name: 'Lomography Color Negative 400' },
+];
+
+function getFilmStockMatch(name: string) {
+  const normalizedName = normalizeFilmStockName(name);
+
+  if (!normalizedName) {
+    return null;
+  }
+
+  return (
+    filmStockOptions.find((filmStock) => normalizeFilmStockName(filmStock.name) === normalizedName) ??
+    filmStockOptions.find((filmStock) => normalizeFilmStockName(filmStock.name).startsWith(normalizedName)) ??
+    filmStockOptions.find((filmStock) => normalizeFilmStockName(filmStock.name).includes(normalizedName)) ??
+    null
+  );
 }
 
 export default function App() {
@@ -539,6 +574,10 @@ export default function App() {
   const selectedCameraMatch = getCameraMatch(draft.camera);
   const cameraPreviewSrc = selectedCameraMatch?.imageSrc ?? (draft.camera.trim() ? getCameraImageSrc(draft.camera) : null);
   const cameraPreviewLabel = selectedCameraMatch?.name ?? draft.camera.trim();
+  const selectedFilmStockMatch = getFilmStockMatch(draft.filmStock);
+  const filmStockPreviewLabel = selectedFilmStockMatch?.name ?? draft.filmStock.trim();
+  const filmStockPreviewSrc =
+    selectedFilmStockMatch?.imageSrc ?? (filmStockPreviewLabel ? createFilmStockIconSrc(filmStockPreviewLabel) : null);
 
   const handleFieldChange = (field: keyof RollDraft, value: string) => {
     setDraft((current) => ({
@@ -1056,6 +1095,9 @@ export default function App() {
           cameraOptions={cameraOptions}
           cameraPreviewSrc={cameraPreviewSrc}
           cameraPreviewLabel={cameraPreviewLabel}
+          filmStockOptions={filmStockOptions}
+          filmStockPreviewSrc={filmStockPreviewSrc}
+          filmStockPreviewLabel={filmStockPreviewLabel}
           onFieldChange={handleFieldChange}
           onStatusChange={(value) => handleFieldChange('status', value)}
           onSubmit={() => {
