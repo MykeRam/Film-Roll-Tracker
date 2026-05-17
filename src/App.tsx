@@ -108,6 +108,15 @@ const landingDemoMetrics = [
 
 const landingDemoBadges = ['24 rolls logged', '3 camera bodies', '5 film stocks', 'Owners-only edits'];
 
+const landingDemoGear = [
+  { name: 'Canon AE-1', imageSrc: '/cameras/canon-ae-1-cutout.png', type: 'camera' },
+  { name: 'Nikon FM2', imageSrc: '/cameras/nikon-fm2-cutout.png', type: 'camera' },
+  { name: 'Mamiya 645', imageSrc: '/cameras/mamiya-645-cutout.png', type: 'camera' },
+  { name: 'Portra 400', imageSrc: '/film-stocks/kodak-portra-400-cutout.png', type: 'roll' },
+  { name: 'Gold 200', imageSrc: '/film-stocks/kodak-gold-200-cutout.png', type: 'roll' },
+  { name: 'Ilford HP5', imageSrc: '/film-stocks/ilford-hp5-plus-cutout.png', type: 'roll' },
+] as const;
+
 function formatCount(value: number, noun: string) {
   return `${value} ${noun}${value === 1 ? '' : 's'}`;
 }
@@ -954,6 +963,15 @@ export default function App() {
                     <span key={badge} className="demo-badge">
                       {badge}
                     </span>
+                  ))}
+                </div>
+
+                <div className="landing-demo__gear" aria-label="Example cameras and rolls">
+                  {landingDemoGear.map((item) => (
+                    <figure className={`demo-gear demo-gear--${item.type}`} key={item.name}>
+                      <img src={item.imageSrc} alt="" aria-hidden="true" />
+                      <figcaption>{item.name}</figcaption>
+                    </figure>
                   ))}
                 </div>
               </aside>

@@ -326,6 +326,45 @@ svg {
   font-weight: 600;
 }
 
+.landing-demo__gear {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.demo-gear {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 148px;
+  margin: 0;
+  border-radius: var(--radius-md);
+  padding: 14px 10px;
+}
+
+.demo-gear img {
+  width: min(138px, 92%);
+  height: 88px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 16px rgba(15, 23, 42, 0.12));
+}
+
+.demo-gear--roll img {
+  width: min(104px, 82%);
+}
+
+.demo-gear figcaption {
+  max-width: 100%;
+  color: var(--muted-strong);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
 .panel,
 .stat-card {
   border: 1px solid var(--line);
@@ -527,6 +566,7 @@ h1 {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  margin-top: 22px;
 }
 
 .auth-form {
@@ -1438,6 +1478,7 @@ tbody tr:hover {
 
   .landing-demo__progress,
   .landing-demo__badges,
+  .landing-demo__gear,
   .mini-summary,
   .snapshot-grid,
   .analytics-stats,

@@ -118,7 +118,6 @@ export function AuthPanel({
         )}
 
         <div className="form-actions">
-          <span className="form-hint">JWT auth keeps access scoped to the signed-in user.</span>
           <button className="primary-button" type="submit" disabled={loading || !canSubmit}>
             {loading ? 'Working...' : mode === 'register' ? 'Create account' : 'Log in'}
           </button>
