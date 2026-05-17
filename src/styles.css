@@ -90,6 +90,31 @@ svg {
   padding: 28px 0 56px;
 }
 
+.app-footer {
+  width: min(1240px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 0 0 28px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  text-align: left;
+}
+
+.app-footer a {
+  color: var(--text);
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: rgba(184, 137, 47, 0.42);
+  text-underline-offset: 4px;
+  transition:
+    color 160ms ease,
+    text-decoration-color 160ms ease;
+}
+
+.app-footer a:hover {
+  color: var(--gold);
+  text-decoration-color: currentColor;
+}
+
 .landing-shell {
   min-height: 100svh;
 }

@@ -976,6 +976,12 @@ export default function App() {
             </div>
           </section>
         </main>
+        <footer className="app-footer">
+          Developed by{' '}
+          <a href="https://myke.nyc" target="_blank" rel="noreferrer">
+            Michael Ramrez
+          </a>
+        </footer>
       </div>
     );
   }
@@ -1139,6 +1145,12 @@ export default function App() {
           }}
         />
       </main>
+      <footer className="app-footer">
+        Developed by{' '}
+        <a href="https://myke.nyc" target="_blank" rel="noreferrer">
+          Michael Ramrez
+        </a>
+      </footer>
     </div>
   );
 }
