@@ -911,7 +911,7 @@ export default function App() {
                     document.getElementById('signup')?.scrollIntoView({ behavior: 'smooth' });
                   }}
                 >
-                  Sign up
+                  Sign up / Log in
                 </button>
               </header>
 
