@@ -942,7 +942,6 @@ export default function App() {
             <div className="landing-split__grid app">
               <aside className="panel landing-demo" aria-label="Demo stats">
                 <div className="section-heading">
-                  <p className="eyebrow">Demo stats</p>
                   <h2>See what the app can track</h2>
                   <p>
                     This example shows the kind of roll history, workflow tracking, and analytics a logged-in user can
