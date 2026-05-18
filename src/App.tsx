@@ -1024,9 +1024,6 @@ export default function App() {
             <p className="hero__lede">Follow the life cycle of each roll, from loaded, shots remaining, developed, then scanned.</p>
 
             <div className="hero__actions">
-              <a className="primary-button" href="#roll-form">
-                Add a roll
-              </a>
               <a className="secondary-button" href="#roll-library">
                 View library
               </a>
