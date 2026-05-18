@@ -68,10 +68,6 @@ type RollValidationErrors = Partial<Record<keyof RollDraft, string>>;
 function validateRollDraft(draft: RollDraft): RollValidationErrors {
   const errors: RollValidationErrors = {};
 
-  if (!draft.title.trim()) {
-    errors.title = 'Roll title is required.';
-  }
-
   if (!draft.camera.trim()) {
     errors.camera = 'Camera is required.';
   }
@@ -97,6 +93,16 @@ function validateRollDraft(draft: RollDraft): RollValidationErrors {
   }
 
   return errors;
+}
+
+function createRollTitle(draft: RollDraft) {
+  const title = draft.title.trim();
+
+  if (title) {
+    return title;
+  }
+
+  return [draft.camera.trim(), draft.filmStock.trim()].filter(Boolean).join(' / ') || 'Untitled roll';
 }
 
 const landingDemoMetrics = [
@@ -667,7 +673,7 @@ export default function App() {
     });
 
   const buildRollPayload = (current: RollDraft) => ({
-    title: current.title.trim(),
+    title: createRollTitle(current),
     camera: current.camera.trim(),
     lens: current.lens.trim(),
     filmStock: current.filmStock.trim(),

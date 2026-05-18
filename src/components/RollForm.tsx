@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import type { RollDraft, RollStatus } from '../types';
 
 type RollFormProps = {
@@ -24,6 +25,12 @@ const statuses: { value: RollStatus; label: string }[] = [
   { value: 'scanned', label: 'Scanned' },
 ];
 
+const promptOrder: Array<keyof RollDraft> = ['camera', 'lens', 'filmStock', 'dateLoaded', 'status', 'notes'];
+
+function inferIso(value: string) {
+  return value.match(/\d{2,5}/)?.[0] ?? '';
+}
+
 export function RollForm({
   draft,
   mode,
@@ -40,6 +47,187 @@ export function RollForm({
   onSubmit,
   onCancel,
 }: RollFormProps) {
+  const [visiblePromptCount, setVisiblePromptCount] = useState(mode === 'edit' ? promptOrder.length : 1);
+  const [formReady, setFormReady] = useState(mode === 'edit');
+  const promptRefs = useRef<Partial<Record<keyof RollDraft, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>>>({});
+  const visiblePrompts = promptOrder.slice(0, mode === 'edit' ? promptOrder.length : visiblePromptCount);
+
+  useEffect(() => {
+    if (mode === 'edit') {
+      setVisiblePromptCount(promptOrder.length);
+      setFormReady(true);
+      return;
+    }
+
+    if (!draft.camera.trim() && !draft.lens.trim() && !draft.filmStock.trim() && !loading) {
+      setVisiblePromptCount(1);
+      setFormReady(false);
+    }
+  }, [draft.camera, draft.filmStock, draft.lens, loading, mode]);
+
+  const focusPrompt = (field: keyof RollDraft) => {
+    window.requestAnimationFrame(() => {
+      promptRefs.current[field]?.focus();
+    });
+  };
+
+  const revealNextPrompt = (index: number) => {
+    const nextField = promptOrder[index + 1];
+
+    if (!nextField) {
+      return;
+    }
+
+    if (promptOrder[index] === 'dateLoaded') {
+      setVisiblePromptCount(promptOrder.length);
+      setFormReady(true);
+      focusPrompt('status');
+      return;
+    }
+
+    setVisiblePromptCount((current) => Math.max(current, index + 2));
+    focusPrompt(nextField);
+  };
+
+  const handlePromptKeyDown = (event: KeyboardEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>, index: number) => {
+    if (event.key !== 'Enter' || event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (index === promptOrder.length - 1) {
+      setFormReady(true);
+      return;
+    }
+
+    revealNextPrompt(index);
+  };
+
+  const renderPrompt = (field: keyof RollDraft, index: number) => {
+    switch (field) {
+      case 'camera':
+        return (
+          <label className="field prompt-field" key={field}>
+            <span>Camera *</span>
+            <input
+              ref={(node) => {
+                promptRefs.current.camera = node;
+              }}
+              value={draft.camera}
+              onChange={(event) => onFieldChange('camera', event.target.value)}
+              onKeyDown={(event) => handlePromptKeyDown(event, index)}
+              placeholder="Nikon FM2"
+              list="camera-options"
+            />
+            <datalist id="camera-options">
+              {cameraOptions.map((camera) => (
+                <option key={camera.name} value={camera.name} />
+              ))}
+            </datalist>
+            {errors.camera ? <span className="field-error">{errors.camera}</span> : null}
+          </label>
+        );
+      case 'lens':
+        return (
+          <label className="field prompt-field" key={field}>
+            <span>Lens *</span>
+            <input
+              ref={(node) => {
+                promptRefs.current.lens = node;
+              }}
+              value={draft.lens}
+              onChange={(event) => onFieldChange('lens', event.target.value)}
+              onKeyDown={(event) => handlePromptKeyDown(event, index)}
+              placeholder="50mm f/1.8"
+            />
+            {errors.lens ? <span className="field-error">{errors.lens}</span> : null}
+          </label>
+        );
+      case 'filmStock':
+        return (
+          <label className="field prompt-field" key={field}>
+            <span>Film stock / ISO *</span>
+            <input
+              ref={(node) => {
+                promptRefs.current.filmStock = node;
+              }}
+              value={draft.filmStock}
+              onChange={(event) => {
+                const value = event.target.value;
+                onFieldChange('filmStock', value);
+                onFieldChange('iso', inferIso(value));
+              }}
+              onKeyDown={(event) => handlePromptKeyDown(event, index)}
+              placeholder="Kodak Portra 400"
+              list="film-stock-options"
+            />
+            <datalist id="film-stock-options">
+              {filmStockOptions.map((filmStock) => (
+                <option key={filmStock.name} value={filmStock.name} />
+              ))}
+            </datalist>
+            {errors.filmStock ? <span className="field-error">{errors.filmStock}</span> : null}
+            {errors.iso ? <span className="field-error">{errors.iso}</span> : null}
+          </label>
+        );
+      case 'dateLoaded':
+        return (
+          <label className="field prompt-field" key={field}>
+            <span>Date loaded *</span>
+            <input
+              ref={(node) => {
+                promptRefs.current.dateLoaded = node;
+              }}
+              value={draft.dateLoaded}
+              onChange={(event) => onFieldChange('dateLoaded', event.target.value)}
+              onKeyDown={(event) => handlePromptKeyDown(event, index)}
+              type="date"
+            />
+            {errors.dateLoaded ? <span className="field-error">{errors.dateLoaded}</span> : null}
+          </label>
+        );
+      case 'status':
+        return (
+          <label className="field prompt-field" key={field}>
+            <span>Status</span>
+            <select
+              ref={(node) => {
+                promptRefs.current.status = node;
+              }}
+              value={draft.status}
+              onChange={(event) => onStatusChange(event.target.value as RollStatus)}
+              onKeyDown={(event) => handlePromptKeyDown(event, index)}
+            >
+              {statuses.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        );
+      case 'notes':
+        return (
+          <label className="field prompt-field prompt-field--full" key={field}>
+            <span>Notes</span>
+            <textarea
+              ref={(node) => {
+                promptRefs.current.notes = node;
+              }}
+              value={draft.notes}
+              onChange={(event) => onFieldChange('notes', event.target.value)}
+              onKeyDown={(event) => handlePromptKeyDown(event, index)}
+              placeholder="Metering notes, lighting setup, favorite frames, development reminders..."
+              rows={4}
+            />
+          </label>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <form
       className="panel form-panel"
@@ -81,96 +269,25 @@ export function RollForm({
         </div>
       </div>
 
-      <div className="form-grid">
-        <label className="field">
-          <span>Roll title *</span>
-          <input
-            value={draft.title}
-            onChange={(event) => onFieldChange('title', event.target.value)}
-            placeholder="City walk, studio test, road trip..."
-          />
-          {errors.title ? <span className="field-error">{errors.title}</span> : null}
-        </label>
-        <label className="field">
-          <span>Camera *</span>
-          <input
-            value={draft.camera}
-            onChange={(event) => onFieldChange('camera', event.target.value)}
-            placeholder="Nikon FM2"
-            list="camera-options"
-          />
-          <datalist id="camera-options">
-            {cameraOptions.map((camera) => (
-              <option key={camera.name} value={camera.name} />
-            ))}
-          </datalist>
-          {errors.camera ? <span className="field-error">{errors.camera}</span> : null}
-        </label>
-        <label className="field">
-          <span>Lens *</span>
-          <input value={draft.lens} onChange={(event) => onFieldChange('lens', event.target.value)} placeholder="50mm f/1.8" />
-          {errors.lens ? <span className="field-error">{errors.lens}</span> : null}
-        </label>
-        <label className="field">
-          <span>Film stock *</span>
-          <input
-            value={draft.filmStock}
-            onChange={(event) => onFieldChange('filmStock', event.target.value)}
-            placeholder="Portra 400"
-            list="film-stock-options"
-          />
-          <datalist id="film-stock-options">
-            {filmStockOptions.map((filmStock) => (
-              <option key={filmStock.name} value={filmStock.name} />
-            ))}
-          </datalist>
-          {errors.filmStock ? <span className="field-error">{errors.filmStock}</span> : null}
-        </label>
-        <label className="field">
-          <span>ISO *</span>
-          <input value={draft.iso} onChange={(event) => onFieldChange('iso', event.target.value)} inputMode="numeric" placeholder="400" />
-          {errors.iso ? <span className="field-error">{errors.iso}</span> : null}
-        </label>
-        <label className="field">
-          <span>Date loaded *</span>
-          <input value={draft.dateLoaded} onChange={(event) => onFieldChange('dateLoaded', event.target.value)} type="date" />
-          {errors.dateLoaded ? <span className="field-error">{errors.dateLoaded}</span> : null}
-        </label>
-        <label className="field">
-          <span>Status</span>
-          <select value={draft.status} onChange={(event) => onStatusChange(event.target.value as RollStatus)}>
-            {statuses.map((status) => (
-              <option key={status.value} value={status.value}>
-                {status.label}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="prompt-stack" aria-live="polite">
+        {visiblePrompts.map((field, index) => renderPrompt(field, index))}
       </div>
 
-      <label className="field field--full">
-        <span>Notes</span>
-        <textarea
-          value={draft.notes}
-          onChange={(event) => onFieldChange('notes', event.target.value)}
-          placeholder="Metering notes, lighting setup, favorite frames, development reminders..."
-          rows={4}
-        />
-      </label>
-
-      <div className="form-actions">
-        <p className="form-hint">This scaffold is wired for local state now and can be switched to an API later.</p>
-        <div className="form-actions__buttons">
-          {mode === 'edit' ? (
-            <button className="secondary-button" type="button" onClick={onCancel} disabled={loading}>
-              Cancel
+      {formReady ? (
+        <div className="form-actions">
+          <p className="form-hint">Review the roll details, then save it to your library.</p>
+          <div className="form-actions__buttons">
+            {mode === 'edit' ? (
+              <button className="secondary-button" type="button" onClick={onCancel} disabled={loading}>
+                Cancel
+              </button>
+            ) : null}
+            <button className="primary-button" type="submit" disabled={loading}>
+              {loading ? 'Saving...' : mode === 'edit' ? 'Update roll' : 'Save roll'}
             </button>
-          ) : null}
-          <button className="primary-button" type="submit" disabled={loading}>
-            {loading ? 'Saving...' : mode === 'edit' ? 'Update roll' : 'Save roll'}
-          </button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </form>
   );
 }
