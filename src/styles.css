@@ -14,7 +14,7 @@
   --sage: #6f8a67;
   --sage-soft: #a9bca2;
   --clay: #b26d54;
-  --shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+  --shadow: none;
   --radius-xl: 28px;
   --radius-lg: 20px;
   --radius-md: 14px;
@@ -695,7 +695,6 @@ h1 {
 
 .camera-card--expanded {
   border-color: rgba(17, 24, 39, 0.22);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
 }
 
 .camera-card__button,
@@ -981,10 +980,6 @@ h1 {
   gap: 14px;
   max-width: 760px;
   margin-top: 22px;
-}
-
-.prompt-field {
-  animation: rise 280ms ease-out both;
 }
 
 .prompt-field--full textarea {
