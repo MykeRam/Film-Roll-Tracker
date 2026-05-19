@@ -263,6 +263,7 @@ export default function App() {
   const [rollSubmitSuccessTick, setRollSubmitSuccessTick] = useState(0);
   const [selectedRollId, setSelectedRollId] = useState<string | null>(null);
   const [pendingDeleteRollId, setPendingDeleteRollId] = useState<string | null>(null);
+  const [deleteModalClosing, setDeleteModalClosing] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedRollActivity, setSelectedRollActivity] = useState<RollActivity[]>([]);
   const [selectedRollUploads, setSelectedRollUploads] = useState<RollUpload[]>([]);
@@ -274,6 +275,7 @@ export default function App() {
   const [uploadPreviewUrl, setUploadPreviewUrl] = useState<string | null>(null);
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
   const authNoticeTimerRef = useRef<number | null>(null);
+  const deleteModalTimerRef = useRef<number | null>(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -288,6 +290,7 @@ export default function App() {
     setRollErrors({});
     setRollSubmitSuccessTick(0);
     setPendingDeleteRollId(null);
+    setDeleteModalClosing(false);
     setDeleteLoading(false);
     setRollDetailError(null);
     setSelectedRollId(null);
@@ -348,8 +351,33 @@ export default function App() {
       if (authNoticeTimerRef.current) {
         window.clearTimeout(authNoticeTimerRef.current);
       }
+      if (deleteModalTimerRef.current) {
+        window.clearTimeout(deleteModalTimerRef.current);
+      }
     };
   }, []);
+
+  const closeDeleteModal = () => {
+    if (!pendingDeleteRollId || deleteLoading) {
+      return;
+    }
+
+    if (deleteModalClosing) {
+      return;
+    }
+
+    setDeleteModalClosing(true);
+
+    if (deleteModalTimerRef.current) {
+      window.clearTimeout(deleteModalTimerRef.current);
+    }
+
+    deleteModalTimerRef.current = window.setTimeout(() => {
+      setPendingDeleteRollId(null);
+      setDeleteModalClosing(false);
+      deleteModalTimerRef.current = null;
+    }, 180);
+  };
 
   useEffect(() => {
     if (!pendingDeleteRollId) {
@@ -358,7 +386,7 @@ export default function App() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setPendingDeleteRollId(null);
+        closeDeleteModal();
       }
     };
 
@@ -835,6 +863,7 @@ export default function App() {
 
     setRollError(null);
     setPendingDeleteRollId(id);
+    setDeleteModalClosing(false);
   };
 
   const confirmDeleteRoll = async () => {
@@ -849,12 +878,14 @@ export default function App() {
 
     if (!targetRoll) {
       setPendingDeleteRollId(null);
+      setDeleteModalClosing(false);
       return;
     }
 
     if (!isRollOwner(targetRoll, sessionUser?.id)) {
       setRollError('You can only delete your own rolls.');
       setPendingDeleteRollId(null);
+      setDeleteModalClosing(false);
       return;
     }
 
@@ -872,7 +903,7 @@ export default function App() {
         const remainingRoll = rolls.find((roll) => roll.id !== id) ?? null;
         setSelectedRollId(remainingRoll?.id ?? null);
       }
-      setPendingDeleteRollId(null);
+      closeDeleteModal();
     } catch (error) {
       setRollError(error instanceof Error ? error.message : 'Unable to delete this roll.');
     } finally {
@@ -1223,9 +1254,15 @@ export default function App() {
         />
       </main>
       {pendingDeleteRollId ? (
-        <div className="modal-overlay" role="presentation" onClick={() => setPendingDeleteRollId(null)}>
+        <div
+          className={`modal-overlay${deleteModalClosing ? ' modal-overlay--closing' : ''}`}
+          role="presentation"
+          onClick={() => {
+            closeDeleteModal();
+          }}
+        >
           <div
-            className="modal-panel"
+            className={`modal-panel${deleteModalClosing ? ' modal-panel--closing' : ''}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-roll-title"
@@ -1253,7 +1290,9 @@ export default function App() {
                 <button
                   className="secondary-button"
                   type="button"
-                  onClick={() => setPendingDeleteRollId(null)}
+                  onClick={() => {
+                    closeDeleteModal();
+                  }}
                   disabled={deleteLoading}
                 >
                   Cancel
