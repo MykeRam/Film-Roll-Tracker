@@ -1423,6 +1423,51 @@ tbody tr:hover {
   background: rgba(15, 23, 42, 0.02);
 }
 
+tbody tr.table-banner-row:hover {
+  background: transparent;
+}
+
+.table-banner-cell {
+  padding: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.table-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(111, 138, 103, 0.18);
+  background: rgba(111, 138, 103, 0.12);
+  color: #35583b;
+  font-weight: 800;
+  animation: tableBannerIn 180ms ease-out both;
+}
+
+.table-banner-row--closing .table-banner {
+  animation: tableBannerOut 180ms ease-in both;
+}
+
+.table-banner__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.table-banner__icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .table-row--selected {
   background: rgba(216, 185, 108, 0.08);
 }
@@ -1575,6 +1620,28 @@ tbody tr:hover {
   }
 }
 
+@keyframes tableBannerIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tableBannerOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
 @keyframes successBadgePop {
   0% {
     opacity: 0;
@@ -1611,6 +1678,11 @@ tbody tr:hover {
   .modal-overlay--closing,
   .modal-panel,
   .modal-panel--closing {
+    animation: none;
+  }
+
+  .table-banner,
+  .table-banner-row--closing .table-banner {
     animation: none;
   }
 }

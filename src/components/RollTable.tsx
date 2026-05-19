@@ -4,6 +4,7 @@ type RollTableProps = {
   rolls: FilmRoll[];
   currentUserId: string | null;
   selectedRollId: string | null;
+  deleteNotice: { title: string; closing: boolean } | null;
   onEdit: (roll: FilmRoll) => void;
   onStatusChange: (id: string, status: RollStatus) => void;
   onDeleteRequest: (id: string) => void;
@@ -27,7 +28,16 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-export function RollTable({ rolls, currentUserId, selectedRollId, onEdit, onStatusChange, onDeleteRequest, onSelect }: RollTableProps) {
+export function RollTable({
+  rolls,
+  currentUserId,
+  selectedRollId,
+  deleteNotice,
+  onEdit,
+  onStatusChange,
+  onDeleteRequest,
+  onSelect,
+}: RollTableProps) {
   return (
     <section className="panel table-panel" id="roll-library">
       <div className="section-heading">
@@ -49,6 +59,20 @@ export function RollTable({ rolls, currentUserId, selectedRollId, onEdit, onStat
             </tr>
           </thead>
           <tbody>
+            {deleteNotice ? (
+              <tr className={`table-banner-row${deleteNotice.closing ? ' table-banner-row--closing' : ''}`}>
+                <td className="table-banner-cell" colSpan={6}>
+                  <div className="table-banner" role="status" aria-live="polite">
+                    <span className="table-banner__icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M5 12.5l4.5 4.5L19 8.5" />
+                      </svg>
+                    </span>
+                    <span>{deleteNotice.title} has been deleted</span>
+                  </div>
+                </td>
+              </tr>
+            ) : null}
             {rolls.map((roll) => (
               <tr key={roll.id} className={roll.id === selectedRollId ? 'table-row--selected' : undefined}>
                 <td>

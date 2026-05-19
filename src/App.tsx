@@ -265,6 +265,7 @@ export default function App() {
   const [pendingDeleteRollId, setPendingDeleteRollId] = useState<string | null>(null);
   const [deleteModalClosing, setDeleteModalClosing] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deletedRollNotice, setDeletedRollNotice] = useState<{ title: string; closing: boolean } | null>(null);
   const [selectedRollActivity, setSelectedRollActivity] = useState<RollActivity[]>([]);
   const [selectedRollUploads, setSelectedRollUploads] = useState<RollUpload[]>([]);
   const [rollDetailLoading, setRollDetailLoading] = useState(false);
@@ -276,6 +277,8 @@ export default function App() {
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
   const authNoticeTimerRef = useRef<number | null>(null);
   const deleteModalTimerRef = useRef<number | null>(null);
+  const deleteNoticeTimerRef = useRef<number | null>(null);
+  const deleteNoticeCloseTimerRef = useRef<number | null>(null);
 
   const clearSession = () => {
     localStorage.removeItem(TOKEN_KEY);
@@ -292,6 +295,7 @@ export default function App() {
     setPendingDeleteRollId(null);
     setDeleteModalClosing(false);
     setDeleteLoading(false);
+    setDeletedRollNotice(null);
     setRollDetailError(null);
     setSelectedRollId(null);
     setSelectedRollActivity([]);
@@ -301,6 +305,14 @@ export default function App() {
     setUploadPreviewUrl(null);
     setUploadLoading(false);
     setSelectedCamera(null);
+    if (deleteNoticeTimerRef.current) {
+      window.clearTimeout(deleteNoticeTimerRef.current);
+      deleteNoticeTimerRef.current = null;
+    }
+    if (deleteNoticeCloseTimerRef.current) {
+      window.clearTimeout(deleteNoticeCloseTimerRef.current);
+      deleteNoticeCloseTimerRef.current = null;
+    }
   };
 
   useEffect(() => {
@@ -354,11 +366,40 @@ export default function App() {
       if (deleteModalTimerRef.current) {
         window.clearTimeout(deleteModalTimerRef.current);
       }
+      if (deleteNoticeTimerRef.current) {
+        window.clearTimeout(deleteNoticeTimerRef.current);
+      }
+      if (deleteNoticeCloseTimerRef.current) {
+        window.clearTimeout(deleteNoticeCloseTimerRef.current);
+      }
     };
   }, []);
 
-  const closeDeleteModal = () => {
-    if (!pendingDeleteRollId || deleteLoading) {
+  const showDeleteNotice = (title: string) => {
+    if (deleteNoticeTimerRef.current) {
+      window.clearTimeout(deleteNoticeTimerRef.current);
+      deleteNoticeTimerRef.current = null;
+    }
+    if (deleteNoticeCloseTimerRef.current) {
+      window.clearTimeout(deleteNoticeCloseTimerRef.current);
+      deleteNoticeCloseTimerRef.current = null;
+    }
+
+    setDeletedRollNotice({ title, closing: false });
+
+    deleteNoticeCloseTimerRef.current = window.setTimeout(() => {
+      setDeletedRollNotice((current) => (current ? { ...current, closing: true } : current));
+    }, 1600);
+
+    deleteNoticeTimerRef.current = window.setTimeout(() => {
+      setDeletedRollNotice(null);
+      deleteNoticeTimerRef.current = null;
+      deleteNoticeCloseTimerRef.current = null;
+    }, 1900);
+  };
+
+  const closeDeleteModal = (force = false) => {
+    if (!pendingDeleteRollId || (!force && deleteLoading)) {
       return;
     }
 
@@ -895,6 +936,7 @@ export default function App() {
     try {
       await apiDeleteRoll(currentToken, id);
       setRolls((current) => current.filter((roll) => roll.id !== id));
+      showDeleteNotice(targetRoll.title);
       if (editingId === id) {
         resetDraft();
       }
@@ -903,7 +945,7 @@ export default function App() {
         const remainingRoll = rolls.find((roll) => roll.id !== id) ?? null;
         setSelectedRollId(remainingRoll?.id ?? null);
       }
-      closeDeleteModal();
+      closeDeleteModal(true);
     } catch (error) {
       setRollError(error instanceof Error ? error.message : 'Unable to delete this roll.');
     } finally {
@@ -1224,6 +1266,7 @@ export default function App() {
           rolls={visibleRolls}
           currentUserId={sessionUser.id}
           selectedRollId={selectedRollId}
+          deleteNotice={deletedRollNotice}
           onEdit={handleEdit}
           onStatusChange={(id, status) => {
             void updateStatus(id, status);
