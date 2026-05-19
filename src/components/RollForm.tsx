@@ -306,7 +306,8 @@ export function RollForm({
               </span>
             ) : null}
           </div>
-          <p>Capture the roll, then update the status as it moves from loaded to scanned. Fields marked * are required.</p>
+          <p>Capture the roll, then update the status as it moves from loaded to scanned.</p>
+          <p className="form-note">Fields marked * are required.</p>
         </div>
 
         <div className="stock-preview-row" aria-live="polite">
