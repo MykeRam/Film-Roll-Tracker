@@ -1127,16 +1127,19 @@ export default function App() {
               </div>
             </div>
           </section>
-        </main>
-        <footer className="app-footer">
-          Developed by{' '}
-          <a href="https://myke.nyc" target="_blank" rel="noreferrer">
-            Michael Ramrez
-          </a>
-        </footer>
-      </div>
-    );
-  }
+      </main>
+      <footer className="app-footer">
+        <span className="app-footer__mark" aria-hidden="true">
+          ©
+        </span>
+        <span>2026 Developed by</span>
+        <a href="https://myke.nyc" target="_blank" rel="noreferrer">
+          Michael Ramrez
+        </a>
+      </footer>
+    </div>
+  );
+}
 
   return (
     <div className="app-shell">
