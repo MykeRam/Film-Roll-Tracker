@@ -1355,7 +1355,10 @@ export default function App() {
         </div>
       ) : null}
       <footer className="app-footer">
-        Developed by{' '}
+        <span className="app-footer__mark" aria-hidden="true">
+          ©
+        </span>
+        <span>2026 Developed by</span>
         <a href="https://myke.nyc" target="_blank" rel="noreferrer">
           Michael Ramrez
         </a>

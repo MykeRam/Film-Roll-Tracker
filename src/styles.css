@@ -93,14 +93,17 @@ svg {
 .app-footer {
   width: min(1240px, calc(100vw - 32px));
   margin: 0 auto;
-  padding: 10px 0 22px;
+  padding: 8px 0 18px;
   color: #7a6a59;
   font-family: 'Manrope', sans-serif;
-  font-size: 0.98rem;
-  font-weight: 500;
+  font-size: 0.82rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
-  text-align: center;
+  letter-spacing: 0.13em;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   white-space: nowrap;
 }
 
@@ -116,8 +119,7 @@ svg {
 
 .app-footer__mark {
   display: inline-block;
-  margin-right: 10px;
-  font-size: 1.2em;
+  font-size: 1.05em;
   line-height: 1;
 }
 
