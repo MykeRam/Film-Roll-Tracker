@@ -1155,6 +1155,9 @@ export default function App() {
               <a className="secondary-button" href="#roll-library">
                 View library
               </a>
+              <a className="secondary-button" href="#roll-history">
+                Scans
+              </a>
             </div>
           </div>
         </header>
