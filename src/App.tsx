@@ -389,13 +389,13 @@ export default function App() {
 
     deleteNoticeCloseTimerRef.current = window.setTimeout(() => {
       setDeletedRollNotice((current) => (current ? { ...current, closing: true } : current));
-    }, 1600);
+    }, 3000);
 
     deleteNoticeTimerRef.current = window.setTimeout(() => {
       setDeletedRollNotice(null);
       deleteNoticeTimerRef.current = null;
       deleteNoticeCloseTimerRef.current = null;
-    }, 1900);
+    }, 3300);
   };
 
   const closeDeleteModal = (force = false) => {
