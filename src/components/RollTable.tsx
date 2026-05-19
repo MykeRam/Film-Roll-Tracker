@@ -6,7 +6,7 @@ type RollTableProps = {
   selectedRollId: string | null;
   onEdit: (roll: FilmRoll) => void;
   onStatusChange: (id: string, status: RollStatus) => void;
-  onDelete: (id: string) => void;
+  onDeleteRequest: (id: string) => void;
   onSelect: (roll: FilmRoll) => void;
 };
 
@@ -27,7 +27,7 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-export function RollTable({ rolls, currentUserId, selectedRollId, onEdit, onStatusChange, onDelete, onSelect }: RollTableProps) {
+export function RollTable({ rolls, currentUserId, selectedRollId, onEdit, onStatusChange, onDeleteRequest, onSelect }: RollTableProps) {
   return (
     <section className="panel table-panel" id="roll-library">
       <div className="section-heading">
@@ -93,7 +93,7 @@ export function RollTable({ rolls, currentUserId, selectedRollId, onEdit, onStat
                     <button className="secondary-button" type="button" onClick={() => onEdit(roll)} disabled={roll.userId !== currentUserId}>
                       Edit
                     </button>
-                    <button className="ghost-button" type="button" onClick={() => onDelete(roll.id)} disabled={roll.userId !== currentUserId}>
+                    <button className="ghost-button" type="button" onClick={() => onDeleteRequest(roll.id)} disabled={roll.userId !== currentUserId}>
                       Delete
                     </button>
                   </div>

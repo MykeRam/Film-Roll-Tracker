@@ -260,7 +260,10 @@ export default function App() {
   const [rollLoading, setRollLoading] = useState(false);
   const [rollError, setRollError] = useState<string | null>(null);
   const [rollErrors, setRollErrors] = useState<RollValidationErrors>({});
+  const [rollSubmitSuccessTick, setRollSubmitSuccessTick] = useState(0);
   const [selectedRollId, setSelectedRollId] = useState<string | null>(null);
+  const [pendingDeleteRollId, setPendingDeleteRollId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedRollActivity, setSelectedRollActivity] = useState<RollActivity[]>([]);
   const [selectedRollUploads, setSelectedRollUploads] = useState<RollUpload[]>([]);
   const [rollDetailLoading, setRollDetailLoading] = useState(false);
@@ -283,6 +286,9 @@ export default function App() {
     setAuthNotice(null);
     setRollError(null);
     setRollErrors({});
+    setRollSubmitSuccessTick(0);
+    setPendingDeleteRollId(null);
+    setDeleteLoading(false);
     setRollDetailError(null);
     setSelectedRollId(null);
     setSelectedRollActivity([]);
@@ -344,6 +350,27 @@ export default function App() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!pendingDeleteRollId) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setPendingDeleteRollId(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [pendingDeleteRollId]);
 
   useEffect(() => {
     if (!uploadFile) {
@@ -720,6 +747,7 @@ export default function App() {
         setRolls((current) => [createdRoll, ...current]);
         setSelectedRollId(createdRoll.id);
         void refreshRollWorkspace(currentToken, createdRoll.id);
+        setRollSubmitSuccessTick((current) => current + 1);
       }
 
       resetDraft();
@@ -793,8 +821,7 @@ export default function App() {
     }
   };
 
-  const deleteRoll = async (id: string) => {
-    const currentToken = requireToken();
+  const requestDeleteRoll = (id: string) => {
     const targetRoll = rolls.find((roll) => roll.id === id);
 
     if (!targetRoll) {
@@ -807,6 +834,32 @@ export default function App() {
     }
 
     setRollError(null);
+    setPendingDeleteRollId(id);
+  };
+
+  const confirmDeleteRoll = async () => {
+    const currentToken = requireToken();
+    const id = pendingDeleteRollId;
+
+    if (!id) {
+      return;
+    }
+
+    const targetRoll = id ? rolls.find((roll) => roll.id === id) : null;
+
+    if (!targetRoll) {
+      setPendingDeleteRollId(null);
+      return;
+    }
+
+    if (!isRollOwner(targetRoll, sessionUser?.id)) {
+      setRollError('You can only delete your own rolls.');
+      setPendingDeleteRollId(null);
+      return;
+    }
+
+    setRollError(null);
+    setDeleteLoading(true);
 
     try {
       await apiDeleteRoll(currentToken, id);
@@ -819,8 +872,11 @@ export default function App() {
         const remainingRoll = rolls.find((roll) => roll.id !== id) ?? null;
         setSelectedRollId(remainingRoll?.id ?? null);
       }
+      setPendingDeleteRollId(null);
     } catch (error) {
       setRollError(error instanceof Error ? error.message : 'Unable to delete this roll.');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -1117,6 +1173,7 @@ export default function App() {
           draft={draft}
           mode={editingId ? 'edit' : 'create'}
           loading={rollLoading}
+          submitSuccessTick={rollSubmitSuccessTick}
           errors={rollErrors}
           cameraOptions={cameraOptions}
           cameraPreviewSrc={cameraPreviewSrc}
@@ -1140,8 +1197,8 @@ export default function App() {
           onStatusChange={(id, status) => {
             void updateStatus(id, status);
           }}
-          onDelete={(id) => {
-            void deleteRoll(id);
+          onDeleteRequest={(id) => {
+            requestDeleteRoll(id);
           }}
           onSelect={handleSelectRoll}
         />
@@ -1165,6 +1222,50 @@ export default function App() {
           }}
         />
       </main>
+      {pendingDeleteRollId ? (
+        <div className="modal-overlay" role="presentation" onClick={() => setPendingDeleteRollId(null)}>
+          <div
+            className="modal-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-roll-title"
+            aria-describedby="delete-roll-description"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <div className="section-heading">
+              <p className="eyebrow">Delete roll</p>
+              <h2 id="delete-roll-title">Delete this roll from the library?</h2>
+              <p id="delete-roll-description">
+                This will permanently remove the roll and its related activity history. The action cannot be undone.
+              </p>
+            </div>
+
+            <div className="modal-summary">
+              <strong>{rolls.find((roll) => roll.id === pendingDeleteRollId)?.title ?? 'Selected roll'}</strong>
+              <span>This roll will be deleted immediately after confirmation.</span>
+            </div>
+
+            <div className="form-actions modal-actions">
+              <p className="form-hint">Confirm only if you want to remove this roll from the library.</p>
+              <div className="form-actions__buttons">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setPendingDeleteRollId(null)}
+                  disabled={deleteLoading}
+                >
+                  Cancel
+                </button>
+                <button className="danger-button" type="button" onClick={() => void confirmDeleteRoll()} disabled={deleteLoading}>
+                  {deleteLoading ? 'Deleting...' : 'Delete roll'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <footer className="app-footer">
         Developed by{' '}
         <a href="https://myke.nyc" target="_blank" rel="noreferrer">

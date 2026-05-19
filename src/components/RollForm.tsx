@@ -5,6 +5,7 @@ type RollFormProps = {
   draft: RollDraft;
   mode: 'create' | 'edit';
   loading: boolean;
+  submitSuccessTick: number;
   errors: Partial<Record<keyof RollDraft, string>>;
   cameraOptions: ReadonlyArray<{ name: string; imageSrc: string }>;
   cameraPreviewSrc: string | null;
@@ -35,6 +36,7 @@ export function RollForm({
   draft,
   mode,
   loading,
+  submitSuccessTick,
   errors,
   cameraOptions,
   cameraPreviewSrc,
@@ -49,13 +51,19 @@ export function RollForm({
 }: RollFormProps) {
   const [visiblePromptCount, setVisiblePromptCount] = useState(mode === 'edit' ? promptOrder.length : 1);
   const [formReady, setFormReady] = useState(mode === 'edit');
+  const [showSuccessBadge, setShowSuccessBadge] = useState(false);
+  const [successBadgeFading, setSuccessBadgeFading] = useState(false);
+  const [successBadgeKey, setSuccessBadgeKey] = useState(0);
   const promptRefs = useRef<Partial<Record<keyof RollDraft, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null>>>({});
+  const successTimersRef = useRef<number[]>([]);
   const visiblePrompts = promptOrder.slice(0, mode === 'edit' ? promptOrder.length : visiblePromptCount);
 
   useEffect(() => {
     if (mode === 'edit') {
       setVisiblePromptCount(promptOrder.length);
       setFormReady(true);
+      setShowSuccessBadge(false);
+      setSuccessBadgeFading(false);
       return;
     }
 
@@ -64,6 +72,47 @@ export function RollForm({
       setFormReady(false);
     }
   }, [draft.camera, draft.filmStock, draft.lens, loading, mode]);
+
+  useEffect(() => {
+    return () => {
+      for (const timer of successTimersRef.current) {
+        window.clearTimeout(timer);
+      }
+      successTimersRef.current = [];
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mode !== 'create' || submitSuccessTick === 0) {
+      return;
+    }
+
+    for (const timer of successTimersRef.current) {
+      window.clearTimeout(timer);
+    }
+    successTimersRef.current = [];
+
+    setSuccessBadgeKey(submitSuccessTick);
+    setShowSuccessBadge(true);
+    setSuccessBadgeFading(false);
+
+    const fadeTimer = window.setTimeout(() => {
+      setSuccessBadgeFading(true);
+    }, 1400);
+
+    const hideTimer = window.setTimeout(() => {
+      setShowSuccessBadge(false);
+      setSuccessBadgeFading(false);
+    }, 2400);
+
+    successTimersRef.current = [fadeTimer, hideTimer];
+
+    return () => {
+      for (const timer of [fadeTimer, hideTimer]) {
+        window.clearTimeout(timer);
+      }
+    };
+  }, [mode, submitSuccessTick]);
 
   const focusPrompt = (field: keyof RollDraft) => {
     window.requestAnimationFrame(() => {
@@ -240,7 +289,23 @@ export function RollForm({
       <div className="form-panel__intro">
         <div className="section-heading">
           <p className="eyebrow">Quick add</p>
-          <h2>{mode === 'edit' ? 'Edit roll entry' : 'Log a new roll'}</h2>
+          <div className="section-heading__title-row">
+            <h2>{mode === 'edit' ? 'Edit roll entry' : 'Log a new roll'}</h2>
+            {mode === 'create' && showSuccessBadge ? (
+              <span
+                key={successBadgeKey}
+                className={`submission-badge${successBadgeFading ? ' submission-badge--fading' : ''}`}
+                role="status"
+                aria-live="polite"
+                aria-label="Roll saved"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+                Saved
+              </span>
+            ) : null}
+          </div>
           <p>Capture the roll, then update the status as it moves from loaded to scanned. Fields marked * are required.</p>
         </div>
 

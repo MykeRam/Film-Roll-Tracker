@@ -1,6 +1,6 @@
-import { readFile } from 'node:fs/promises';
 import { Pool } from 'pg';
 import { env } from '../config.js';
+import { applySchema } from '../db/bootstrap.js';
 
 async function main() {
   if (!env.DATABASE_URL) {
@@ -12,8 +12,7 @@ async function main() {
   });
 
   try {
-    const schema = await readFile(new URL('../../schema.sql', import.meta.url), 'utf8');
-    await pool.query(schema);
+    await applySchema(pool);
     console.log('PostgreSQL schema applied successfully.');
   } finally {
     await pool.end();
