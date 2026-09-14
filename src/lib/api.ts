@@ -24,6 +24,20 @@ type ApiErrorPayload = {
   issues?: Array<{ path: string; message: string }>;
 };
 
+export type FilmCatalogItem = {
+  _id: string;
+  brand: string;
+  name: string;
+  iso: number;
+  formatThirtyFive: boolean;
+  formatOneTwenty: boolean;
+  color: boolean;
+  process: string;
+  staticImageUrl?: string;
+  description?: string;
+  keyFeatures?: Array<{ feature: string }>;
+};
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: options.method ?? 'GET',
@@ -165,6 +179,10 @@ export async function deleteRollUpload(token: string, rollId: string, uploadId: 
 
 export async function getAnalyticsOverview(token: string): Promise<AnalyticsOverview> {
   return request<AnalyticsOverview>('/analytics/overview', { token });
+}
+
+export async function listFilmCatalog(): Promise<FilmCatalogItem[]> {
+  return request<FilmCatalogItem[]>('/film-catalog');
 }
 
 export function getApiBaseUrl() {

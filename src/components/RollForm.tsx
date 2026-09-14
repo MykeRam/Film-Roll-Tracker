@@ -10,7 +10,9 @@ type RollFormProps = {
   cameraOptions: ReadonlyArray<{ name: string; imageSrc: string }>;
   cameraPreviewSrc: string | null;
   cameraPreviewLabel: string;
-  filmStockOptions: ReadonlyArray<{ name: string; imageSrc?: string }>;
+  filmStockOptions: ReadonlyArray<{ name: string; imageSrc?: string; iso?: number }>;
+  filmStockCatalogLoading: boolean;
+  filmStockCatalogError: string | null;
   filmStockPreviewSrc: string | null;
   filmStockPreviewLabel: string;
   onFieldChange: (field: keyof RollDraft, value: string) => void;
@@ -42,6 +44,8 @@ export function RollForm({
   cameraPreviewSrc,
   cameraPreviewLabel,
   filmStockOptions,
+  filmStockCatalogLoading,
+  filmStockCatalogError,
   filmStockPreviewSrc,
   filmStockPreviewLabel,
   onFieldChange,
@@ -205,7 +209,8 @@ export function RollForm({
               onChange={(event) => {
                 const value = event.target.value;
                 onFieldChange('filmStock', value);
-                onFieldChange('iso', inferIso(value));
+                const selectedFilmStock = filmStockOptions.find((filmStock) => filmStock.name === value);
+                onFieldChange('iso', selectedFilmStock?.iso ? String(selectedFilmStock.iso) : inferIso(value));
               }}
               onKeyDown={(event) => handlePromptKeyDown(event, index)}
               placeholder="Kodak Portra 400"
@@ -216,6 +221,8 @@ export function RollForm({
                 <option key={filmStock.name} value={filmStock.name} />
               ))}
             </datalist>
+            {filmStockCatalogLoading ? <span className="field-hint">Loading film catalog…</span> : null}
+            {filmStockCatalogError ? <span className="field-hint">Using saved film stocks; catalog unavailable.</span> : null}
             {errors.filmStock ? <span className="field-error">{errors.filmStock}</span> : null}
             {errors.iso ? <span className="field-error">{errors.iso}</span> : null}
           </label>

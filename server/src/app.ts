@@ -55,6 +55,20 @@ export function createApp() {
     });
   });
 
+  app.get('/film-catalog', async (_req, res, next) => {
+    try {
+      const response = await fetch(env.FILM_CATALOG_URL);
+
+      if (!response.ok) {
+        return res.status(502).json({ message: `Film catalog returned status ${response.status}.` });
+      }
+
+      return res.json(await response.json());
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   app.use('/auth', createAuthRouter({ jwtSecret: env.JWT_SECRET, userStore, rollStore, activityStore }));
   app.use('/rolls', createRollRouter({ jwtSecret: env.JWT_SECRET, userStore, rollStore, uploadStore, activityStore }));
   app.use(

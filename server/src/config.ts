@@ -22,4 +22,5 @@ export const env = {
   JWT_SECRET: process.env.JWT_SECRET ?? 'film-roll-tracker-dev-secret',
   DATABASE_URL: process.env.DATABASE_URL?.trim() || null,
   CLIENT_ORIGINS: parseOrigins(process.env.CLIENT_ORIGIN),
+  FILM_CATALOG_URL: process.env.FILM_CATALOG_URL ?? 'https://filmapi.vercel.app/api/films',
 };

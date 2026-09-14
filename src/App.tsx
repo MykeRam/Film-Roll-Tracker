@@ -13,11 +13,13 @@ import {
   listRollActivity,
   listRollUploads,
   listRolls,
+  listFilmCatalog,
   login,
   register,
   updateRoll,
 } from './lib/api';
 import type { AuthSession, FilmRoll, RollActivity, RollDraft, RollStatus, RollUpload, User } from './types';
+import type { FilmCatalogItem } from './lib/api';
 
 const TOKEN_KEY = 'film-roll-tracker-token';
 
@@ -210,7 +212,7 @@ function createFilmStockIconSrc(name: string) {
   `);
 }
 
-const filmStockOptions: ReadonlyArray<{ name: string; imageSrc?: string }> = [
+const fallbackFilmStockOptions: ReadonlyArray<{ name: string; imageSrc?: string }> = [
   { name: 'Cinestill 800T' },
   { name: 'Fujifilm 400' },
   { name: 'Ilford Delta 3200' },
@@ -226,7 +228,7 @@ const filmStockOptions: ReadonlyArray<{ name: string; imageSrc?: string }> = [
   { name: 'Lomography Color Negative 400' },
 ];
 
-function getFilmStockMatch(name: string) {
+function getFilmStockMatch(name: string, options: ReadonlyArray<{ name: string; imageSrc?: string; iso?: number }>) {
   const normalizedName = normalizeFilmStockName(name);
 
   if (!normalizedName) {
@@ -234,9 +236,9 @@ function getFilmStockMatch(name: string) {
   }
 
   return (
-    filmStockOptions.find((filmStock) => normalizeFilmStockName(filmStock.name) === normalizedName) ??
-    filmStockOptions.find((filmStock) => normalizeFilmStockName(filmStock.name).startsWith(normalizedName)) ??
-    filmStockOptions.find((filmStock) => normalizeFilmStockName(filmStock.name).includes(normalizedName)) ??
+    options.find((filmStock) => normalizeFilmStockName(filmStock.name) === normalizedName) ??
+    options.find((filmStock) => normalizeFilmStockName(filmStock.name).startsWith(normalizedName)) ??
+    options.find((filmStock) => normalizeFilmStockName(filmStock.name).includes(normalizedName)) ??
     null
   );
 }
@@ -246,6 +248,9 @@ export default function App() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [rolls, setRolls] = useState<FilmRoll[]>([]);
+  const [filmCatalog, setFilmCatalog] = useState<FilmCatalogItem[]>([]);
+  const [filmCatalogLoading, setFilmCatalogLoading] = useState(true);
+  const [filmCatalogError, setFilmCatalogError] = useState<string | null>(null);
   const [draft, setDraft] = useState<RollDraft>(createInitialDraft);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<RollStatus | 'all'>('all');
@@ -268,6 +273,52 @@ export default function App() {
   const [deletedRollNotice, setDeletedRollNotice] = useState<{ title: string; closing: boolean } | null>(null);
   const [selectedRollActivity, setSelectedRollActivity] = useState<RollActivity[]>([]);
   const [selectedRollUploads, setSelectedRollUploads] = useState<RollUpload[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    listFilmCatalog()
+      .then((items) => {
+        if (active) {
+          setFilmCatalog(items.filter((item) => item.name && item.brand && Number.isFinite(item.iso)));
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setFilmCatalogError(error instanceof Error ? error.message : 'Film catalog unavailable.');
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setFilmCatalogLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filmStockOptions = useMemo(() => {
+    const catalogOptions = filmCatalog.map((item) => ({
+      name: `${item.brand} ${item.name}`
+        .split(' ')
+        .map((part) => part ? `${part[0].toUpperCase()}${part.slice(1)}` : part)
+        .join(' '),
+      imageSrc: item.staticImageUrl,
+      iso: item.iso,
+    }));
+    const seen = new Set<string>();
+
+    return [...catalogOptions, ...fallbackFilmStockOptions].filter((option) => {
+      const key = normalizeFilmStockName(option.name);
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }, [filmCatalog]);
   const [rollDetailLoading, setRollDetailLoading] = useState(false);
   const [rollDetailError, setRollDetailError] = useState<string | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -685,7 +736,7 @@ export default function App() {
   const selectedCameraMatch = getCameraMatch(draft.camera);
   const cameraPreviewSrc = selectedCameraMatch?.imageSrc ?? (draft.camera.trim() ? getCameraImageSrc(draft.camera) : null);
   const cameraPreviewLabel = selectedCameraMatch?.name ?? draft.camera.trim();
-  const selectedFilmStockMatch = getFilmStockMatch(draft.filmStock);
+  const selectedFilmStockMatch = getFilmStockMatch(draft.filmStock, filmStockOptions);
   const filmStockPreviewLabel = selectedFilmStockMatch?.name ?? draft.filmStock.trim();
   const filmStockPreviewSrc =
     selectedFilmStockMatch?.imageSrc ?? (filmStockPreviewLabel ? createFilmStockIconSrc(filmStockPreviewLabel) : null);
@@ -1258,6 +1309,8 @@ export default function App() {
           cameraPreviewSrc={cameraPreviewSrc}
           cameraPreviewLabel={cameraPreviewLabel}
           filmStockOptions={filmStockOptions}
+          filmStockCatalogLoading={filmCatalogLoading}
+          filmStockCatalogError={filmCatalogError}
           filmStockPreviewSrc={filmStockPreviewSrc}
           filmStockPreviewLabel={filmStockPreviewLabel}
           onFieldChange={handleFieldChange}

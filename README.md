@@ -10,6 +10,7 @@ Film Roll Tracker is a portfolio project for film photographers who want to log 
 - Edit and delete entries
 - Filter by status, stock, and camera
 - Dashboard with basic stats
+- Film-stock catalog loaded from [The Film API](https://filmapi.vercel.app/api/films), with local fallback entries
 
 ## Stretch Ideas
 
@@ -41,6 +42,8 @@ The backend now includes a JWT auth scaffold in `server/`:
 - User-owned rolls with edit/delete permissions enforced on the server
 
 The frontend authenticates against the API, loads only the signed-in user’s rolls, and only enables edit/delete actions for rolls owned by that account.
+
+The film-stock picker loads catalog data through the local API’s `/film-catalog` proxy. This keeps the browser CORS-safe while retaining the existing local fallback list and support for custom film-stock names.
 
 The logged-out landing state now starts with a full-screen hero image area, a centered main title, and a sign-up button in the top-right header bar. Drop your image at `public/hero.jpg` and it will render in the hero automatically. Below that, the page splits into demo stats on the left and the sign-up/login box on the right.
 
