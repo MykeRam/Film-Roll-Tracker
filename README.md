@@ -30,6 +30,12 @@ Film Roll Tracker is a portfolio project for film photographers who want to log 
 - Cloudinary or similar for image upload
 - Chart.js or Recharts
 
+## Sources and Attribution
+
+The film-stock catalog is sourced from [The Film API](https://filmapi.vercel.app/), using its public [`/api/films`](https://filmapi.vercel.app/api/films) endpoint. We use the catalog’s brand, film name, ISO, format availability, color/process information, descriptions, and product-image URLs to enhance roll entry. The app keeps local fallback entries and supports custom film names so it is not dependent on the external service.
+
+Product images are loaded from the external URLs returned by The Film API. Review the API and image providers’ usage terms before deploying this project publicly or using the assets commercially.
+
 ## Auth Scaffold
 
 The backend now includes a JWT auth scaffold in `server/`:
