@@ -117,12 +117,12 @@ const landingDemoMetrics = [
 const landingDemoBadges = ['24 rolls logged', '3 camera bodies', '5 film stocks', 'Owners-only edits'];
 
 const landingDemoGear = [
-  { name: 'Canon AE-1', imageSrc: '/cameras/canon-ae-1-cutout.png', type: 'camera' },
-  { name: 'Nikon FM2', imageSrc: '/cameras/nikon-fm2-cutout.png', type: 'camera' },
-  { name: 'Mamiya 645', imageSrc: '/cameras/mamiya-645-cutout.png', type: 'camera' },
-  { name: 'Portra 400', imageSrc: '/film-stocks/kodak-portra-400-cutout.png', type: 'roll' },
-  { name: 'Gold 200', imageSrc: '/film-stocks/kodak-gold-200-cutout.png', type: 'roll' },
-  { name: 'Ilford HP5', imageSrc: '/film-stocks/ilford-hp5-plus-cutout.png', type: 'roll' },
+  { name: 'Canon AE-1', imageSrc: assetPath('/cameras/canon-ae-1-cutout.png'), type: 'camera' },
+  { name: 'Nikon FM2', imageSrc: assetPath('/cameras/nikon-fm2-cutout.png'), type: 'camera' },
+  { name: 'Mamiya 645', imageSrc: assetPath('/cameras/mamiya-645-cutout.png'), type: 'camera' },
+  { name: 'Portra 400', imageSrc: assetPath('/film-stocks/kodak-portra-400-cutout.png'), type: 'roll' },
+  { name: 'Gold 200', imageSrc: assetPath('/film-stocks/kodak-gold-200-cutout.png'), type: 'roll' },
+  { name: 'Ilford HP5', imageSrc: assetPath('/film-stocks/ilford-hp5-plus-cutout.png'), type: 'roll' },
 ] as const;
 
 function formatCount(value: number, noun: string) {
@@ -135,6 +135,10 @@ function hashString(value: string) {
 
 function svgDataUri(svg: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function assetPath(path: string) {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
 }
 
 function createCameraIconSrc(name: string) {
@@ -159,13 +163,13 @@ function normalizeCameraName(name: string) {
 }
 
 const cameraOptions = [
-  { name: 'Canon AE-1', imageSrc: '/cameras/canon-ae-1-cutout.png' },
-  { name: 'Canon AF35ML', imageSrc: '/cameras/canon-af35ml-cutout.png' },
-  { name: 'Canon Super Sure Shot', imageSrc: '/cameras/canon-af35ml-cutout.png' },
-  { name: 'Mamiya 645', imageSrc: '/cameras/mamiya-645-cutout.png' },
-  { name: 'Nikon FM2', imageSrc: '/cameras/nikon-fm2-cutout.png' },
-  { name: 'Olympus XA', imageSrc: '/cameras/olympus-xa-cutout.png' },
-  { name: 'Pentax K1000', imageSrc: '/cameras/pentax-k1000-cutout.png' },
+  { name: 'Canon AE-1', imageSrc: assetPath('/cameras/canon-ae-1-cutout.png') },
+  { name: 'Canon AF35ML', imageSrc: assetPath('/cameras/canon-af35ml-cutout.png') },
+  { name: 'Canon Super Sure Shot', imageSrc: assetPath('/cameras/canon-af35ml-cutout.png') },
+  { name: 'Mamiya 645', imageSrc: assetPath('/cameras/mamiya-645-cutout.png') },
+  { name: 'Nikon FM2', imageSrc: assetPath('/cameras/nikon-fm2-cutout.png') },
+  { name: 'Olympus XA', imageSrc: assetPath('/cameras/olympus-xa-cutout.png') },
+  { name: 'Pentax K1000', imageSrc: assetPath('/cameras/pentax-k1000-cutout.png') },
 ] as const;
 
 const cameraImageMap: Record<string, string> = Object.fromEntries(
@@ -216,13 +220,13 @@ const fallbackFilmStockOptions: ReadonlyArray<{ name: string; imageSrc?: string 
   { name: 'Cinestill 800T' },
   { name: 'Fujifilm 400' },
   { name: 'Ilford Delta 3200' },
-  { name: 'Ilford HP5 Plus', imageSrc: '/film-stocks/ilford-hp5-plus-cutout.png' },
+  { name: 'Ilford HP5 Plus', imageSrc: assetPath('/film-stocks/ilford-hp5-plus-cutout.png') },
   { name: 'Ilford XP2 Super' },
   { name: 'Kodak ColorPlus 200' },
-  { name: 'Kodak Ektar 100', imageSrc: '/film-stocks/kodak-ektar-100-cutout.png' },
-  { name: 'Kodak Gold 200', imageSrc: '/film-stocks/kodak-gold-200-cutout.png' },
+  { name: 'Kodak Ektar 100', imageSrc: assetPath('/film-stocks/kodak-ektar-100-cutout.png') },
+  { name: 'Kodak Gold 200', imageSrc: assetPath('/film-stocks/kodak-gold-200-cutout.png') },
   { name: 'Kodak Portra 160' },
-  { name: 'Kodak Portra 400', imageSrc: '/film-stocks/kodak-portra-400-cutout.png' },
+  { name: 'Kodak Portra 400', imageSrc: assetPath('/film-stocks/kodak-portra-400-cutout.png') },
   { name: 'Kodak Portra 800' },
   { name: 'Kodak Tri-X 400' },
   { name: 'Lomography Color Negative 400' },
@@ -636,6 +640,7 @@ export default function App() {
       localStorage.setItem(TOKEN_KEY, session.token);
       setToken(session.token);
       setSessionUser(session.user);
+      window.scrollTo({ top: 0, behavior: 'auto' });
       setAuthForm(createInitialAuthForm());
       setDraft(createInitialDraft());
       setEditingId(null);
@@ -1076,12 +1081,13 @@ export default function App() {
 
   if (appLoading) {
     return (
-      <div className="app-shell">
-        <main className="app">
-          <section className="panel auth-panel auth-panel--loading">
+      <div className="app-shell loading-shell">
+        <main className="loading-page" aria-live="polite">
+          <section className="loading-page__content">
             <p className="eyebrow">Film Roll Tracker</p>
             <h1>Loading your workspace</h1>
             <p className="hero__lede">Restoring your session and roll library.</p>
+            <span className="loading-page__indicator" aria-hidden="true" />
           </section>
         </main>
       </div>
@@ -1093,7 +1099,7 @@ export default function App() {
       <div className="app-shell">
         <main className="landing-shell">
           <section className="landing-hero panel">
-            <img className="landing-hero__image" src="/hero.jpg" alt="" aria-hidden="true" />
+            <img className="landing-hero__image" src={assetPath('/hero.jpg')} alt="" aria-hidden="true" />
             <div className="landing-hero__overlay" />
             <div className="landing-hero__content">
               <header className="landing-header">
@@ -1185,7 +1191,7 @@ export default function App() {
         </span>
         <span>2026 Developed by</span>
         <a href="https://myke.nyc" target="_blank" rel="noreferrer">
-          Michael Ramrez
+          Myke
         </a>
       </footer>
     </div>
@@ -1194,14 +1200,14 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <main className="app">
+      <main className="app app--authenticated">
         {authNotice ? <p className="dashboard-notice">{authNotice}</p> : null}
         <header className="hero panel">
           <button className="ghost-button hero__logout" type="button" onClick={handleLogout}>
             Log out
           </button>
           <div className="hero__copy">
-            <p className="eyebrow">Welcome back, {sessionUser.name}!</p>
+            <p className="eyebrow hero__welcome">Welcome back, {sessionUser.name}!</p>
             <h1>Film Roll Tracker</h1>
             <p className="hero__lede">Follow the life cycle of each roll, from loaded, shots remaining, developed, then scanned.</p>
 
@@ -1413,7 +1419,7 @@ export default function App() {
         </span>
         <span>2026 Developed by</span>
         <a href="https://myke.nyc" target="_blank" rel="noreferrer">
-          Michael Ramrez
+          Myke
         </a>
       </footer>
     </div>
