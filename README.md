@@ -20,15 +20,12 @@ Film Roll Tracker is a portfolio project for film photographers who want to log 
 - Public share page for completed rolls
 - Analytics charts
 
-## Suggested Stack
+## Stack
 
 - React
 - TypeScript
-- Node and Express
-- PostgreSQL
-- JWT auth
-- Cloudinary or similar for image upload
-- Chart.js or Recharts
+- Supabase Auth and PostgreSQL
+- GitHub Pages
 
 ## Sources and Attribution
 
@@ -36,22 +33,31 @@ The film-stock catalog is sourced from [The Film API](https://filmapi.vercel.app
 
 Product images are loaded from the external URLs returned by The Film API. Review the API and image providers’ usage terms before deploying this project publicly or using the assets commercially.
 
-## Auth Scaffold
+## Supabase Backend
 
-The backend now includes a JWT auth scaffold in `server/`:
+The production frontend connects directly to the dedicated `Film Roll Tracker` Supabase project for authentication and data:
 
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /auth/me`
-- PostgreSQL-ready user storage
-- In-memory fallback for local development without a database
-- User-owned rolls with edit/delete permissions enforced on the server
+- Email/password authentication
+- User profiles and user-owned rolls
+- Roll activity and scan-preview metadata
+- Row-level security policies on every exposed table
 
-The frontend authenticates against the API, loads only the signed-in user’s rolls, and only enables edit/delete actions for rolls owned by that account.
+The legacy Express API remains in `server/` for local reference, but it is no longer used by the GitHub Pages frontend. Supabase owns authentication and enforces access to each user’s records.
 
 The film-stock picker loads catalog data through the local API’s `/film-catalog` proxy. This keeps the browser CORS-safe while retaining the existing local fallback list and support for custom film-stock names.
 
 The logged-out landing state now starts with a full-screen hero image area, a centered main title, and a sign-up button in the top-right header bar. Drop your image at `public/hero.jpg` and it will render in the hero automatically. Below that, the page splits into demo stats on the left and the sign-up/login box on the right.
+
+### Supabase Configuration
+
+Create a `.env.local` file with the project URL and publishable key:
+
+```bash
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+```
+
+The GitHub Pages workflow expects the same values as repository variables named `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
 
 ## Database Setup
 

@@ -20,6 +20,7 @@ import {
 } from './lib/api';
 import type { AuthSession, FilmRoll, RollActivity, RollDraft, RollStatus, RollUpload, User } from './types';
 import type { FilmCatalogItem } from './lib/api';
+import { supabase } from './lib/supabase';
 
 const TOKEN_KEY = 'film-roll-tracker-token';
 
@@ -336,6 +337,7 @@ export default function App() {
   const deleteNoticeCloseTimerRef = useRef<number | null>(null);
 
   const clearSession = () => {
+    void supabase?.auth.signOut();
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setSessionUser(null);
