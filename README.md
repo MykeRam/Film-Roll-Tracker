@@ -11,10 +11,11 @@ Film Roll Tracker is a portfolio project for film photographers who want to log 
 - Filter by status, stock, and camera
 - Dashboard with basic stats
 - Film-stock catalog loaded from [The Film API](https://filmapi.vercel.app/api/films), with local fallback entries
+- Attach scan previews to individual rolls
 
 ## Stretch Ideas
 
-- Upload scan previews
+- Move scan files to Supabase Storage
 - Lab tracking
 - Shooting notes by frame range
 - Public share page for completed rolls
@@ -44,7 +45,9 @@ The production frontend connects directly to the dedicated `Film Roll Tracker` S
 
 The legacy Express API remains in `server/` for local reference, but it is no longer used by the GitHub Pages frontend. Supabase owns authentication and enforces access to each user’s records.
 
-The film-stock picker loads catalog data through the local API’s `/film-catalog` proxy. This keeps the browser CORS-safe while retaining the existing local fallback list and support for custom film-stock names.
+The film-stock picker requests catalog data from The Film API’s public `/api/films` endpoint and retains the local fallback list and support for custom film-stock names if that service is unavailable.
+
+Scan previews currently use the prototype upload flow: the selected image is converted to a Base64 data URL in the browser and stored in the `file_url` column of the user-owned `roll_uploads` table. The app does not use Supabase Storage yet. This keeps the prototype simple, but large scans can increase database size; moving files to a private Supabase Storage bucket is a planned improvement.
 
 The logged-out landing state now starts with a full-screen hero image area, a centered main title, and a sign-up button in the top-right header bar. Drop your image at `public/hero.jpg` and it will render in the hero automatically. Below that, the page splits into demo stats on the left and the sign-up/login box on the right.
 
@@ -73,7 +76,7 @@ To use PostgreSQL locally:
 npm run db:setup
 ```
 
-The setup script reads `server/schema.sql` and creates the `users` and `rolls` tables if they do not already exist.
+The setup script reads `server/schema.sql` and creates the legacy local `users` and `rolls` tables if they do not already exist. The production GitHub Pages frontend uses the separate Supabase schema instead.
 
 Run the API separately:
 
